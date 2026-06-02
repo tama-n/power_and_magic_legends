@@ -29,9 +29,29 @@ public class PlayerLaneControl : MonoBehaviour
     }
     void Update()
     {
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard != null)
+        {
+            if (keyboard.aKey.wasPressedThisFrame)
+            {
+                if (currentLane > 0)
+                {
+                    currentLane--;
+                }
+            }
+
+            if (keyboard.dKey.wasPressedThisFrame)
+            {
+                if (currentLane < 2)
+                {
+                    currentLane++;
+                }
+            }
+        }
         float threshold = 0.7f;
 
-        if (joycons.Count > 0)
+        if (joycons != null && joycons.Count > 0)
         {
             Joycon j = joycons[jc_ind];
             accel = j.GetAccel();
@@ -42,6 +62,7 @@ public class PlayerLaneControl : MonoBehaviour
                 {
                     currentLane--;
                     tiltedLeft = true;
+                    tiltedRight = true;
                 }
             }
 
@@ -52,15 +73,16 @@ public class PlayerLaneControl : MonoBehaviour
                 {
                     currentLane++;
                     tiltedRight = true;
+                    tiltedLeft = true;
                 }
             }
-        }
 
-        // 中央付近に戻ったらリセット
-        if (Mathf.Abs(accel.x) < 0.05f)
-        {
-            tiltedRight = false;
-            tiltedLeft = false;
+            if (Mathf.Abs(accel.x) < 0.05f)
+            {
+                tiltedRight = false;
+                tiltedLeft = false;
+            }
+
         }
 
         Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
