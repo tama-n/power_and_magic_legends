@@ -649,6 +649,7 @@ MonoBehaviour:
   criticalMultiplier: 2
   closeRange: 2
   rangeAttackDistance: 50
+  rangeAttackRadius: 1
   attackPoint: {fileID: 1343639012}
 --- !u!1001 &1480422442
 PrefabInstance:
@@ -843,7 +844,7 @@ Transform:
   m_GameObject: {fileID: 1914562735}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.13, y: 0.66, z: -0.26}
+  m_LocalPosition: {x: -0.12999785, y: 0.66, z: -0.2}
   m_LocalScale: {x: 1.9044012, y: 1.9044012, z: 1.9044012}
   m_ConstrainProportionsScale: 0
   m_Children: []

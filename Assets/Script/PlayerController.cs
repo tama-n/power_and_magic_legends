@@ -13,8 +13,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float criticalMultiplier = 2f;
 
     [Header("--- 攻撃の判定用設定 ---")]
-    [SerializeField] private float closeRange = 2.0f;     // 近距離攻撃の届く距離
-    [SerializeField] private float rangeAttackDistance = 50.0f; // ★追加：遠距離攻撃のリーチ（飛距離）
+    [SerializeField] private float closeRange = 2.0f;
+    [SerializeField] private float rangeAttackDistance = 50.0f; // 飛距離
+
+    // ★追加：レーザーの太さ（半径）をインスペクターから変えられるようにしました
+    [SerializeField] private float rangeAttackRadius = 1.0f;
 
     [SerializeField] private Transform attackPoint;
 
@@ -28,21 +31,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // 近距離攻撃 (E)
     private void PerformCloseAttack()
     {
-        Debug.Log("<color=cyan>【システム】近距離攻撃ボタンが押されました</color>");
+        Debug.Log("<color=cyan>【システム】近距離攻撃発動</color>");
         Collider[] hitEnemies = Physics.OverlapSphere(transform.position + transform.forward, closeRange);
-
-        if (hitEnemies.Length == 0)
-        {
-            Debug.Log("近距離攻撃：範囲内にオブジェクトがありません（空振り）");
-        }
-
         foreach (Collider enemyCollider in hitEnemies)
         {
-            Debug.Log($"近距離攻撃が接触しました: {enemyCollider.name}");
-
             EnemyHealth enemy = enemyCollider.GetComponent<EnemyHealth>();
             if (enemy != null)
             {
@@ -52,33 +46,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // 遠距離攻撃 (Q)
     private void PerformRangeAttack()
     {
-        Debug.Log("<color=magenta>【システム】遠距離攻撃ボタンが押されました</color>");
+        Debug.Log("<color=magenta>【システム】太い遠距離レーザー発動</color>");
         RaycastHit hit;
 
         Vector3 origin = transform.position;
         if (attackPoint != null)
         {
-            if (attackPoint == transform)
-            {
-                origin = transform.position + transform.forward * 1.5f;
-            }
-            else
-            {
-                origin = attackPoint.position;
-            }
+            // プレイヤー自身がAttackPointなら少し前から出して自爆防止
+            origin = (attackPoint == transform) ? transform.position + transform.forward * 1.5f : attackPoint.position;
         }
 
-        // ★新機能：Unityの画面（Sceneビュー）に、攻撃レーザーの軌跡を1秒間「赤い線」で描画します
+        // Sceneビューに赤い中心線を引く（1秒間表示）
         Debug.DrawRay(origin, transform.forward * rangeAttackDistance, Color.red, 1.0f);
 
-        // レーザーを飛ばす（飛距離をインスペクターの変数に連動）
-        if (Physics.Raycast(origin, transform.forward, out hit, rangeAttackDistance))
+        // ★Physics.SphereCast（太さのあるレーザー）を飛ばす
+        // originから半径rangeAttackRadiusの球を、正面(forward)に飛ばします
+        if (Physics.SphereCast(origin, rangeAttackRadius, transform.forward, out hit, rangeAttackDistance))
         {
-            // ★重要：何にレーザーがぶつかったかを名前でログに出す
-            Debug.Log($"<color=green>遠距離攻撃がヒットしました！ 衝突対象: {hit.collider.name}</color>");
+            Debug.Log($"<color=green>🎯 ヒット！ 対象: {hit.collider.name} / 距離: {hit.distance}m</color>");
 
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
             if (enemy != null)
@@ -86,15 +73,10 @@ public class PlayerController : MonoBehaviour
                 int finalDamage = CalculateDamage(rangeAttackDamage);
                 enemy.TakeDamage(finalDamage);
             }
-            else
-            {
-                Debug.Log($"衝突した {hit.collider.name} には EnemyHealth がついていません。");
-            }
         }
         else
         {
-            // 何にも当たらなかった場合
-            Debug.Log($"遠距離攻撃：距離 {rangeAttackDistance}m 以内に何も検知しませんでした（空振り）");
+            Debug.Log($"空振り：太さ {rangeAttackRadius * 2}m の範囲に敵がいませんでした。");
         }
     }
 
@@ -102,7 +84,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Random.Range(0f, 100f) <= criticalChance)
         {
-            Debug.Log("<color=red>💥 クリティカルヒット！ 💥</color>");
+            Debug.Log("<color=red>💥 クリティカル！ 💥</color>");
             return Mathf.RoundToInt(baseDamage * criticalMultiplier);
         }
         return baseDamage;
@@ -110,7 +92,17 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        // 近距離攻撃の範囲
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position + transform.forward, closeRange);
+
+        // ★遠距離レーザーの「太さ」をScene上で確認するためのガイドライン
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.magenta;
+            Vector3 startPoint = (attackPoint == transform) ? transform.position + transform.forward * 1.5f : attackPoint.position;
+            // 球体判定のスタート地点をワイヤーフレームで表示
+            Gizmos.DrawWireSphere(startPoint, rangeAttackRadius);
+        }
     }
 }
