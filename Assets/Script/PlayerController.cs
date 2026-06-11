@@ -3,20 +3,20 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("--- 攻撃力設定 (Attack.txt) ---")]
+    [Header("攻撃力設定")]
     [SerializeField] private int closeAttackDamage = 100;
     [SerializeField] private int rangeAttackDamage = 100;
 
-    [Header("--- クリティカル設定 ---")]
+    [Header("クリティカル設定")]
     [Range(0f, 100f)]
-    [SerializeField] private float criticalChance = 5f;
-    [SerializeField] private float criticalMultiplier = 2f;
+    [SerializeField] private float criticalChance = 5f; //クリティカル率
+    [SerializeField] private float criticalMultiplier = 2f; //クリティカル倍率
 
-    [Header("--- 攻撃の判定用設定 ---")]
+    [Header("攻撃の判定用設定")]
     [SerializeField] private float closeRange = 2.0f;
-    [SerializeField] private float rangeAttackDistance = 50.0f; // 飛距離
+    [SerializeField] private float rangeAttackDistance = 50.0f; //魔法の飛距離
 
-    // ★追加：レーザーの太さ（半径）をインスペクターから変えられるようにしました
+    [Header("魔法攻撃の大きさ")]
     [SerializeField] private float rangeAttackRadius = 1.0f;
 
     [SerializeField] private Transform attackPoint;
@@ -26,18 +26,23 @@ public class PlayerController : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
         {
-            if (keyboard.qKey.wasPressedThisFrame) { PerformRangeAttack(); }
-            if (keyboard.eKey.wasPressedThisFrame) { PerformCloseAttack(); }
+            // Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
+            if (keyboard.qKey.wasPressedThisFrame) {
+                PerformRangeAttack(); 
+            }
+            if (keyboard.eKey.wasPressedThisFrame) {
+                PerformCloseAttack(); 
+            }
         }
     }
 
     private void PerformCloseAttack()
     {
-        Debug.Log("<color=cyan>【システム】近距離攻撃発動</color>");
+        Debug.Log("<color=cyan>近距離攻撃をしました</color>");
         Collider[] hitEnemies = Physics.OverlapSphere(transform.position + transform.forward, closeRange);
         foreach (Collider enemyCollider in hitEnemies)
         {
-            EnemyHealth enemy = enemyCollider.GetComponent<EnemyHealth>();
+            EnemyHealth enemy = enemyCollider.GetComponent<EnemyHealth>(); //コライダー(オブジェクト)が敵ならenemyという変数に入れる。
             if (enemy != null)
             {
                 int finalDamage = CalculateDamage(closeAttackDamage);
@@ -48,24 +53,23 @@ public class PlayerController : MonoBehaviour
 
     private void PerformRangeAttack()
     {
-        Debug.Log("<color=magenta>【システム】太い遠距離レーザー発動</color>");
-        RaycastHit hit;
+        Debug.Log("<color=magenta>魔法攻撃をしました</color>");
+        RaycastHit hit; //魔法に当たったオブジェクトの情報を入れる変数
 
-        Vector3 origin = transform.position;
+        Vector3 origin = transform.position; //魔法の発射位置(初期値はプレイヤーの位置)
         if (attackPoint != null)
         {
             // プレイヤー自身がAttackPointなら少し前から出して自爆防止
             origin = (attackPoint == transform) ? transform.position + transform.forward * 1.5f : attackPoint.position;
         }
 
-        // Sceneビューに赤い中心線を引く（1秒間表示）
+        //赤い線を引く(デバック用)
         Debug.DrawRay(origin, transform.forward * rangeAttackDistance, Color.red, 1.0f);
 
-        // ★Physics.SphereCast（太さのあるレーザー）を飛ばす
-        // originから半径rangeAttackRadiusの球を、正面(forward)に飛ばします
+        // originから半径rangeAttackRadiusの球を、正面に飛ばします
         if (Physics.SphereCast(origin, rangeAttackRadius, transform.forward, out hit, rangeAttackDistance))
         {
-            Debug.Log($"<color=green>🎯 ヒット！ 対象: {hit.collider.name} / 距離: {hit.distance}m</color>");
+            Debug.Log($"<color=green>魔法ヒット。 対象: {hit.collider.name} / 距離: {hit.distance}m</color>");
 
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
             if (enemy != null)
@@ -76,7 +80,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            Debug.Log($"空振り：太さ {rangeAttackRadius * 2}m の範囲に敵がいませんでした。");
+            Debug.Log($"魔法は当たっていません");
         }
     }
 
@@ -84,7 +88,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Random.Range(0f, 100f) <= criticalChance)
         {
-            Debug.Log("<color=red>💥 クリティカル！ 💥</color>");
+            Debug.Log("<color=red>クリティカル</color>");
             return Mathf.RoundToInt(baseDamage * criticalMultiplier);
         }
         return baseDamage;

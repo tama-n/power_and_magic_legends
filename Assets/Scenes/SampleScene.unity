@@ -647,9 +647,9 @@ MonoBehaviour:
   rangeAttackDamage: 100
   criticalChance: 5
   criticalMultiplier: 2
-  closeRange: 2
-  rangeAttackDistance: 50
-  rangeAttackRadius: 1
+  closeRange: 4
+  rangeAttackDistance: 30
+  rangeAttackRadius: 3
   attackPoint: {fileID: 1343639012}
 --- !u!1001 &1480422442
 PrefabInstance:
