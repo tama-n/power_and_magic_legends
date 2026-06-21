@@ -109,4 +109,20 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawWireSphere(startPoint, rangeAttackRadius);
         }
     }
+
+    //攻撃力強化
+    public void BoostAttack(int amount)
+    {
+        closeAttackDamage += amount;
+        rangeAttackDamage += amount;
+        Debug.Log($"プレイヤーの攻撃力が {amount} アップした！ (近接:{closeAttackDamage} / 遠距離:{rangeAttackDamage})");
+    }
+
+    // クリティカル確率をアップさせる窓口
+    public void BoostCriticalChance(float amount)
+    {
+        // 100%を超えないように Mathf.Min で制限をかける
+        criticalChance = Mathf.Min(criticalChance + amount, 100f);
+        Debug.Log($"プレイヤーのクリティカル率が {amount}% アップした！ (現在:{criticalChance}%)");
+    }
 }

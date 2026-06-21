@@ -1,36 +1,61 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // 制限時間の文字を表示するために必要
 
 public class WaveManager : MonoBehaviour
 {
     [Header("--- タイム設定 ---")]
     [SerializeField] private float battleDuration = 25f; // 戦闘時間
+    [SerializeField] private float upgradeDuration = 5f;  // 強化選択の時間（5秒）
+
     private float timer = 0f;
+    private bool isUpgrading = false;
 
     [Header("--- UI設定 ---")]
-    [SerializeField] private GameObject upgradePanel; // ステップ1で作ったPanelをドラッグ＆ドロップ
+    [SerializeField] private GameObject upgradePanel;
+    [SerializeField] private TextMeshProUGUI timerText; // 5秒をカウントダウンする文字用
 
-    private bool isUpgrading = false;
+    
+    private PlayerController player;
 
     void Start()
     {
-        // ゲーム開始時はタイマーリセット、UIは隠す、時間は動かす
+        // 最初は25秒の戦闘からスタート
         timer = battleDuration;
         upgradePanel.SetActive(false);
         Time.timeScale = 1f;
+
+        //PlayerControllerのスクリプトがアタッチされてるオブジェクト(プレイヤー)を記憶しておく
+        player = FindObjectOfType<PlayerController>();
     }
 
     void Update()
     {
-        // 強化選択中はタイマーを進めない
-        if (isUpgrading) return;
-
-        // タイマーを減算
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
+        if (!isUpgrading)
         {
-            StartUpgradePhase();
+            // 【戦闘中】25秒のカウントダウン
+            timer -= Time.deltaTime;
+            if (timer <= 0f)
+            {
+                StartUpgradePhase();
+            }
+        }
+        else
+        {
+            // 【強化中】Time.timeScale = 0でも動く特殊な時間(UnscaledDeltaTime)で5秒を測る
+            timer -= Time.unscaledDeltaTime;
+
+            // 画面に「残り 4.2秒」のように整数で表示
+            if (timerText != null)
+            {
+                timerText.text = $"残り時間: {Mathf.CeilToInt(timer)}秒";
+            }
+
+            if (timer <= 0f)
+            {
+                // 5秒経っても選ばなかったら、強制的に「強化なし」で再開
+                EndUpgradePhase("時間切れ（強化なし）");
+            }
         }
     }
 
@@ -39,24 +64,53 @@ public class WaveManager : MonoBehaviour
     {
         isUpgrading = true;
         upgradePanel.SetActive(true); // 強化画面を表示
+        timer = upgradeDuration;       // タイマーを5秒にセット
 
-        // ★最重要：Unityの世界の時間を止める
+        // Unityの世界の時間を止める（敵やプレイヤーの動きをストップ）
         Time.timeScale = 0f;
-
-        Debug.Log("25秒経過！ゲームを一時停止して強化画面を開きました。");
     }
 
-    // 強化が選ばれたら呼び出す（ゲーム再開）
-    public void SelectUpgrade(string upgradeType)
+    // ★UIボタンから呼ばれる関数
+    // ボタンのインスペクター（OnClick）にこれを登録します
+    public void OnSelectUpgradeButton(string upgradeType)
     {
-        // ここでプレイヤーのステータスを強化する（後ほど実装）
-        Debug.Log($"{upgradeType} が選択されました！ゲームを再開します。");
+        // すでに時間切れになっていたら処理しない安全対策
+        if (!isUpgrading) return;
+
+        EndUpgradePhase(upgradeType);
+    }
+
+    // 強化フェーズの終了とゲーム再開
+    private void EndUpgradePhase(string choiceResult)
+    {
+        Debug.Log($"【結果】: {choiceResult} が選ばれました！ゲームを再開します。");
+
+        // ここに「攻撃力アップ」などの実際の強化処理を今後書きます
 
         upgradePanel.SetActive(false); // 強化画面を隠す
         timer = battleDuration;        // タイマーを25秒にリセット
         isUpgrading = false;
-
-        // ★最重要：Unityの世界の時間を動き出させる
+        
+        // Unityの世界の時間を動き出させる（ポーズ解除）
         Time.timeScale = 1f;
+
+        // もしプレイヤーが見つからなければ、強化処理をスキップ（エラー防止）
+        if (player == null) return;
+
+        // 💡文字列（引数）に応じて、プレイヤーの窓口を呼び分ける！
+        switch (choiceResult)
+        {
+            case "AttackUp":
+                player.BoostAttack(30); // 攻撃力を30アップ！
+                break;
+
+            case "CriticalUp":
+                player.BoostCriticalChance(10f); // クリティカル率を10%アップ！
+                break;
+
+            case "TimeUp":
+                Debug.Log("時間切れ！強化は獲得できませんでした。");
+                break;
+        }
     }
 }
