@@ -125,4 +125,18 @@ public class PlayerController : MonoBehaviour
         criticalChance = Mathf.Min(criticalChance + amount, 100f);
         Debug.Log($"プレイヤーのクリティカル率が {amount}% アップした！ (現在:{criticalChance}%)");
     }
+
+    // 近距離攻撃のリーチ強化
+    public void BoostCloseRange(float amount)
+    {
+        closeRange += amount;
+        Debug.Log($"近距離攻撃のリーチが {amount} アップした！ (現在: {closeRange})");
+    }
+
+    // 魔法攻撃の射程（飛距離）をアップさせる窓口
+    public void BoostRangeAttackDistance(float amount)
+    {
+        rangeAttackDistance += amount;
+        Debug.Log($"魔法攻撃の射程が {amount} 伸びた！ (現在: {rangeAttackDistance})");
+    }
 }

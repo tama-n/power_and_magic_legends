@@ -15,7 +15,13 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private TextMeshProUGUI timerText; // 5秒をカウントダウンする文字用
 
-    
+    [Header("--- 強化の上昇値設定 ---")]
+    [SerializeField] private int attackUpgradeAmount = 30;       // 攻撃力の上昇値
+    [SerializeField] private float criticalUpgradeAmount = 10f;  // クリティカル率の上昇値（%）
+    [SerializeField] private float closeRangeUpgradeAmount = 1.0f; // 近距離攻撃のリーチの上昇値
+    [SerializeField] private float rangeAttackDistUpgradeAmount = 10.0f; // 遠距離攻撃の飛距離の上昇値
+
+
     private PlayerController player;
 
     void Start()
@@ -53,7 +59,7 @@ public class WaveManager : MonoBehaviour
 
             if (timer <= 0f)
             {
-                // 5秒経っても選ばなかったら、強制的に「強化なし」で再開
+                // 5秒経っても選ばなかったら、強制的に再開
                 EndUpgradePhase("時間切れ（強化なし）");
             }
         }
@@ -70,8 +76,8 @@ public class WaveManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    // ★UIボタンから呼ばれる関数
-    // ボタンのインスペクター（OnClick）にこれを登録します
+    //UIボタンから呼ばれる関数
+    //ボタンのインスペクター（OnClick）にこれを登録します
     public void OnSelectUpgradeButton(string upgradeType)
     {
         // すでに時間切れになっていたら処理しない安全対策
@@ -101,11 +107,19 @@ public class WaveManager : MonoBehaviour
         switch (choiceResult)
         {
             case "AttackUp":
-                player.BoostAttack(30); // 攻撃力を30アップ！
+                player.BoostAttack(attackUpgradeAmount); // 攻撃力をアップ！
                 break;
 
             case "CriticalUp":
-                player.BoostCriticalChance(10f); // クリティカル率を10%アップ！
+                player.BoostCriticalChance(criticalUpgradeAmount); // クリティカル率をアップ！
+                break;
+
+            case "CloseRangeUp": 
+                player.BoostCloseRange(closeRangeUpgradeAmount); // 近距離攻撃のリーチをアップ！
+                break;
+
+            case "RangeDistUp":  
+                player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount); // 遠距離攻撃の飛距離をアップ！
                 break;
 
             case "TimeUp":
