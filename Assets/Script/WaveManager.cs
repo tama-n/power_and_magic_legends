@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // 制限時間の文字を表示するために必要
+using TMPro; 
 
 public class WaveManager : MonoBehaviour
 {
     [Header("--- タイム設定 ---")]
     [SerializeField] private float battleDuration = 25f; // 戦闘時間
-    [SerializeField] private float upgradeDuration = 5f;  // 強化選択の時間（5秒）
+    [SerializeField] private float upgradeDuration = 5f;  // 強化選択の時間
 
     private float timer = 0f;
     private bool isUpgrading = false;
@@ -22,6 +22,9 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private float rangeAttackDistUpgradeAmount = 10.0f; // 遠距離攻撃の飛距離の上昇値
     [SerializeField] private float magicCooldownReduceAmount = 0.5f; // 魔法のクールダウン短縮の上昇値（秒）
 
+    [Header("---ウェーブ数---")]
+    [SerializeField] private int maxWaves = 8;
+    private int currentWave = 1;
 
     private PlayerController player;
 
@@ -29,11 +32,13 @@ public class WaveManager : MonoBehaviour
     {
         // 最初は25秒の戦闘からスタート
         timer = battleDuration;
-        upgradePanel.SetActive(false);
-        Time.timeScale = 1f;
+        upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
+        Time.timeScale = 1f; //ゲーム再生
 
         //PlayerControllerのスクリプトがアタッチされてるオブジェクト(プレイヤー)を記憶しておく
         player = FindObjectOfType<PlayerController>();
+
+        Debug.Log($"ゲーム開始。全{maxWaves}ウェーブ");
     }
 
     void Update()
@@ -49,7 +54,7 @@ public class WaveManager : MonoBehaviour
         }
         else
         {
-            // 強化中のTime.timeScale = 0でも動く特殊な時間(UnscaledDeltaTime)で5秒を測る
+            // 強化中5秒を測る
             timer -= Time.unscaledDeltaTime;
 
             // 画面に「残り 4.2秒」のように整数で表示
@@ -95,7 +100,7 @@ public class WaveManager : MonoBehaviour
         // ここに「攻撃力アップ」などの実際の強化処理を今後書く
 
         upgradePanel.SetActive(false); // 強化画面を隠す
-        timer = battleDuration;        // タイマーを25秒にリセット
+        //timer = battleDuration;        // タイマーを25秒にリセット
         isUpgrading = false;
         
         // ポーズ解除
@@ -131,5 +136,23 @@ public class WaveManager : MonoBehaviour
                 Debug.Log("時間切れ！強化は獲得できませんでした。");
                 break;
         }
+
+        if(currentWave >= maxWaves)
+        {
+            FinishGame();
+        }
+        else
+        {
+            currentWave++;
+            timer = battleDuration;
+        }
+    }
+    private void FinishGame()
+    {
+        Time.timeScale = 0f; // ゲーム世界を完全にストップ
+
+        Debug.Log("ゲーム終了");
+
+        // 今後ここにゲームクリア画面などを表示？
     }
 }
