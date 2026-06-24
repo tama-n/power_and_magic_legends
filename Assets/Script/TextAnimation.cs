@@ -2,21 +2,30 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class TextAnimation : MonoBehaviour {
+public class TextAnimation : MonoBehaviour
+{
     [SerializeField] private TMP_Text tmpText;
 
-    private float ward_par_flame = 0.2f;
+    public bool IsFinished { get; private set; }
 
-    void Start() {
+    public void Play()
+    {
+        StopAllCoroutines();
         StartCoroutine(Simple());
     }
 
-    private IEnumerator Simple() {
+    private IEnumerator Simple()
+    {
+        IsFinished = false;
+
         tmpText.maxVisibleCharacters = 0;
 
-        for(int i = 0; i < tmpText.text.Length; i++) {
-            yield return new WaitForSeconds(ward_par_flame);
-            tmpText.maxVisibleCharacters = i+1;
+        for (int i = 0; i < tmpText.text.Length; i++)
+        {
+            yield return new WaitForSeconds(0.05f);
+            tmpText.maxVisibleCharacters = i + 1;
         }
+
+        IsFinished = true;
     }
 }
