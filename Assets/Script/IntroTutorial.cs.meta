@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: b79047bcd61fc9549a9281c7ee6d0e61
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - dialogueText: {instanceID: 0}
+  - chuojiImage: {instanceID: 0}
+  - normal: {fileID: 21300000, guid: 0fa7e12bcc22a1e4c99fd9ee8e1d071f, type: 3}
+  - surprised: {fileID: 21300000, guid: 4a419d8c48b336a42af6b50d459674c0, type: 3}
+  - longSurprised: {fileID: 21300000, guid: 0bcd9d729aa74ea4081d1b6f3b31f98f, type: 3}
+  - textAnimation: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
