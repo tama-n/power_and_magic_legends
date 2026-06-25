@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class MoveTutorial : MonoBehaviour
 {
@@ -38,21 +39,20 @@ public class MoveTutorial : MonoBehaviour
         StartCoroutine(PlayDialogue());
     }
 
-   private IEnumerator PlayDialogue()
-{
-    for (int i = 0; i < lines.Length; i++)
+    private IEnumerator PlayDialogue()
     {
-        dialogueText.text = lines[i];
-        chuojiImage.sprite = faces[i];
+        for (int i = 0; i < lines.Length; i++)
+        {
+            dialogueText.text = lines[i];
+            chuojiImage.sprite = faces[i];
 
-        textAnimation.Play();
+            textAnimation.Play();
 
-        yield return new WaitUntil(() => textAnimation.IsFinished);
+            yield return new WaitUntil(() => textAnimation.IsFinished);
 
-        yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1f);
+        }
+
+        SceneManager.LoadScene("GameScene");
     }
-
-    pageManager.ShowMovePage();
-}
-
 }

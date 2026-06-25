@@ -1,15 +1,20 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyHealth : MonoBehaviour
 {
-    [Header("敵のHP設定")]
+    [Header("---敵のHP設定----")]
     [SerializeField] private int maxHp = 100; //インスペクターから設定可
     private int hp;
+
+    [SerializeField] private Slider hpSlider; //HPバーのスライダー
 
     //敵が出現もしくは復活するたびにHPを満タンにリセット
     void OnEnable()
     {
         hp = maxHp;
+        hpSlider.maxValue = maxHp;
+        hpSlider.value = hp;
     }
 
     //プレイヤーの攻撃から受けるダメージ処理
@@ -17,6 +22,11 @@ public class EnemyHealth : MonoBehaviour
     {
         hp -= damage;
         Debug.Log($"{gameObject.name} に {damage} ダメージ！ 残りHP: {hp}");
+
+        if (hpSlider != null)
+        {
+            hpSlider.value = hp;
+        }
 
         if (hp <= 0)
         {
