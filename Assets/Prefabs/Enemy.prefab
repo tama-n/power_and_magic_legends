@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b274e178a76e34c44b49449a2f21772a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
-  speed: 5
+  speed: 10
   despawnZ: 45
 --- !u!114 &6341941429198135984
 MonoBehaviour:
@@ -140,3 +140,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca5be1e5995b09408bd5a298006e5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  maxHp: 100

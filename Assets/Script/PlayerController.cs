@@ -21,14 +21,30 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform attackPoint;
 
+    [Header("魔法のクールタイム(秒)")]
+    [SerializeField] private float magicCooldown = 3.0f;
+    private float magicCooldownTimer = 0f;
+
     void Update()
     {
+        if (magicCooldownTimer > 0f)
+        {
+            magicCooldownTimer -= Time.deltaTime;
+        }
+
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
         {
             // Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
             if (keyboard.qKey.wasPressedThisFrame) {
-                PerformRangeAttack(); 
+                if (magicCooldownTimer <= 0f)
+                {
+                    PerformRangeAttack();
+                }
+                else
+                {
+                    Debug.Log($"魔法攻撃はクールタイム中です。残り時間: {magicCooldownTimer:F1}秒");
+                }
             }
             if (keyboard.eKey.wasPressedThisFrame) {
                 PerformCloseAttack(); 
@@ -54,6 +70,9 @@ public class PlayerController : MonoBehaviour
     private void PerformRangeAttack()
     {
         Debug.Log("<color=magenta>魔法攻撃をしました</color>");
+
+        magicCooldownTimer = magicCooldown; //魔法攻撃のクールタイムをリセット
+
         RaycastHit hit; //魔法に当たったオブジェクトの情報を入れる変数
 
         Vector3 origin = transform.position; //魔法の発射位置(初期値はプレイヤーの位置)
@@ -108,5 +127,42 @@ public class PlayerController : MonoBehaviour
             // 球体判定のスタート地点をワイヤーフレームで表示
             Gizmos.DrawWireSphere(startPoint, rangeAttackRadius);
         }
+    }
+
+    //攻撃力強化
+    public void BoostAttack(int amount)
+    {
+        closeAttackDamage += amount;
+        rangeAttackDamage += amount;
+        Debug.Log($"プレイヤーの攻撃力が {amount} アップした！ (近接:{closeAttackDamage} / 遠距離:{rangeAttackDamage})");
+    }
+
+    // クリティカル確率をアップさせる窓口
+    public void BoostCriticalChance(float amount)
+    {
+        // 100%を超えないように Mathf.Min で制限をかける
+        criticalChance = Mathf.Min(criticalChance + amount, 100f);
+        Debug.Log($"プレイヤーのクリティカル率が {amount}% アップした！ (現在:{criticalChance}%)");
+    }
+
+    // 近距離攻撃のリーチ強化
+    public void BoostCloseRange(float amount)
+    {
+        closeRange += amount;
+        Debug.Log($"近距離攻撃のリーチが {amount} アップした！ (現在: {closeRange})");
+    }
+
+    // 魔法攻撃の射程（飛距離）を強化
+    public void BoostRangeAttackDistance(float amount)
+    {
+        rangeAttackDistance += amount;
+        Debug.Log($"魔法攻撃の射程が {amount} 伸びた！ (現在: {rangeAttackDistance})");
+    }
+
+    // 魔法攻撃のクールタイムを短縮(強化)
+    public void ReduceMagicCooldown(float amount)
+    {
+        magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f); 
+        Debug.Log($"魔法攻撃のクールタイムが {amount} 秒短縮された！ (現在: {magicCooldown}秒)");
     }
 }
