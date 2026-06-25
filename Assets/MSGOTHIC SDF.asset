@@ -272,6 +272,22 @@ MonoBehaviour:
       m_MarkPositionAdjustment:
         m_XPositionAdjustment: 0
         m_YPositionAdjustment: 0
+    - m_BaseGlyphID: 2174
+      m_BaseGlyphAnchorPoint:
+        m_XCoordinate: 7.03125
+        m_YCoordinate: 4.921875
+      m_MarkGlyphID: 2187
+      m_MarkPositionAdjustment:
+        m_XPositionAdjustment: 0
+        m_YPositionAdjustment: 0
+    - m_BaseGlyphID: 2174
+      m_BaseGlyphAnchorPoint:
+        m_XCoordinate: 7.03125
+        m_YCoordinate: 4.921875
+      m_MarkGlyphID: 2188
+      m_MarkPositionAdjustment:
+        m_XPositionAdjustment: 0
+        m_YPositionAdjustment: 0
     - m_BaseGlyphID: 2196
       m_BaseGlyphAnchorPoint:
         m_XCoordinate: 17.578125
@@ -444,22 +460,6 @@ MonoBehaviour:
       m_BaseGlyphAnchorPoint:
         m_XCoordinate: 0
         m_YCoordinate: 0
-      m_MarkGlyphID: 2188
-      m_MarkPositionAdjustment:
-        m_XPositionAdjustment: 0
-        m_YPositionAdjustment: 0
-    - m_BaseGlyphID: 2174
-      m_BaseGlyphAnchorPoint:
-        m_XCoordinate: 7.03125
-        m_YCoordinate: 4.921875
-      m_MarkGlyphID: 2187
-      m_MarkPositionAdjustment:
-        m_XPositionAdjustment: 0
-        m_YPositionAdjustment: 0
-    - m_BaseGlyphID: 2174
-      m_BaseGlyphAnchorPoint:
-        m_XCoordinate: 7.03125
-        m_YCoordinate: 4.921875
       m_MarkGlyphID: 2188
       m_MarkPositionAdjustment:
         m_XPositionAdjustment: 0
