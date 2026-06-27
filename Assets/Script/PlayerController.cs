@@ -90,7 +90,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log($"<color=green>魔法ヒット。 対象: {hit.collider.name} / 距離: {hit.distance}m</color>");
 
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
+            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>(); //コライダー(オブジェクト)が敵(EnemyHealthスクリプトを持ってる)ならenemyという変数に入れる。
             if (enemy != null)
             {
                 int finalDamage = CalculateDamage(rangeAttackDamage);
