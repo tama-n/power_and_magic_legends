@@ -165,7 +165,7 @@ MonoBehaviour:
   magicCooldownReduceAmount: 0.5
   maxWaves: 8
   speedIncreasePerWave: 0.333
-  spawnIntervalDecreasePerWave: 0.2
+  spawnIntervalDecreasePerWave: 0.4
 --- !u!4 &46712720
 Transform:
   m_ObjectHideFlags: 0
