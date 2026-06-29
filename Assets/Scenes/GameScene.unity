@@ -164,6 +164,8 @@ MonoBehaviour:
   rangeAttackDistUpgradeAmount: 10
   magicCooldownReduceAmount: 0.5
   maxWaves: 8
+  speedIncreasePerWave: 0.333
+  spawnIntervalDecreasePerWave: 0.2
 --- !u!4 &46712720
 Transform:
   m_ObjectHideFlags: 0
@@ -1480,7 +1482,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
   enemyPrefab: {fileID: 3510688202138779085, guid: 2b21da2bffff3fa44a4be21928102a2a, type: 3}
   poolSize: 60
-  spawnInterval: 1
+  spawnInterval: 3
   spawnZ: 120
   laneXPositions:
   - 60
@@ -2286,7 +2288,7 @@ Transform:
   m_GameObject: {fileID: 1343639007}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.015537755, z: -0, w: 0.99987936}
-  m_LocalPosition: {x: 74.85294, y: 2.05, z: 45.502262}
+  m_LocalPosition: {x: 75, y: 2.05, z: 45.502262}
   m_LocalScale: {x: 1.7247999, y: 1.7247999, z: 1.7247999}
   m_ConstrainProportionsScale: 0
   m_Children:

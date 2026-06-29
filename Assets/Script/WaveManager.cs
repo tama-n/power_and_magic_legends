@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 public class WaveManager : MonoBehaviour
 {
+
+    public static WaveManager Instance { get; private set; } //シングルトン(https://jp-seemore.com/sys/17625/)
+
     [Header("--- タイム設定 ---")]
     [SerializeField] private float battleDuration = 25f; //戦闘時間
     [SerializeField] private float upgradeDuration = 5f;  //強化選択の時間
@@ -29,7 +32,38 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private int maxWaves = 8;
     private int currentWave = 1;
 
+    [Header("敵の強化")]
+    [SerializeField] private float speedIncreasePerWave = 0.1f;
+    [SerializeField] private float spawnIntervalDecreasePerWave = 0.15f;
+
     private PlayerController player;
+
+    public int GetCurrentWave()
+    {
+        return currentWave;
+    }
+
+    public float GetSpeedIncreasePerWave()
+    {
+        return speedIncreasePerWave;
+    }
+
+    public float GetSpawnIntervalDecreasePerWave()
+    {
+        return spawnIntervalDecreasePerWave;
+    }
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {
@@ -175,6 +209,16 @@ public class WaveManager : MonoBehaviour
         {
             currentWave++;
             timer = battleDuration;
+
+            float nextInterval = 1.5f - (currentWave - 1) * spawnIntervalDecreasePerWave;
+            float finalInterval = Mathf.Max(nextInterval, 0.4f); 
+
+            
+            float speedMultiple = 1.0f + (currentWave - 1) * speedIncreasePerWave;
+            float finalSpeed = 5.0f * speedMultiple;
+
+            // 3. コンソールに大きく色付きで表示する
+            Debug.Log($"敵の移動速度: {finalSpeed} (倍率: {speedMultiple}倍) / 出現間隔: {finalInterval}秒");
         }
     }
     private void FinishGame()
