@@ -10,6 +10,7 @@ public class EnemyMovement : MonoBehaviour
 
     private float currentSpeed;
 
+
     void OnEnable()
     {
         if(WaveManager.Instance != null)
