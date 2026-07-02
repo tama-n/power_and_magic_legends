@@ -1,15 +1,23 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyHealth : MonoBehaviour
 {
-    [Header("敵のHP設定")]
+    [Header("---敵のHP設定----")]
     [SerializeField] private int maxHp = 100; //インスペクターから設定可
     private int hp;
+
+    [SerializeField] private Slider hpSlider; //HPバーのスライダー
+
+    [Header("スコア減少量")]
+    [SerializeField] private int decScoreAmount = 300;
 
     //敵が出現もしくは復活するたびにHPを満タンにリセット
     void OnEnable()
     {
         hp = maxHp;
+        hpSlider.maxValue = maxHp;
+        hpSlider.value = hp;
     }
 
     //プレイヤーの攻撃から受けるダメージ処理
@@ -17,6 +25,11 @@ public class EnemyHealth : MonoBehaviour
     {
         hp -= damage;
         Debug.Log($"{gameObject.name} に {damage} ダメージ！ 残りHP: {hp}");
+
+        if (hpSlider != null)
+        {
+            hpSlider.value = hp;
+        }
 
         if (hp <= 0)
         {
@@ -28,7 +41,6 @@ public class EnemyHealth : MonoBehaviour
     {
         Debug.Log($"{gameObject.name} を倒した！");
 
-        // 敵を倒したのでスコア+100
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.AddScore(100);
@@ -38,16 +50,22 @@ public class EnemyHealth : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    //プレイヤーに接触したときのスコア減点処理
-    private void OnCollisionEnter(Collision collision)
+    //ぶつかったらスコア減点
+    void OnCollisionEnter(Collision collision)
     {
+        if(hp <= 0)
+        {
+            return;
+        }
+
         if (collision.gameObject.CompareTag("Player"))
         {
+            hp = 0;
             if (ScoreManager.Instance != null)
             {
-                ScoreManager.Instance.DecreaseScore(100);
+                ScoreManager.Instance.DecreaseScore(decScoreAmount);
             }
-            //ぶつかった時もプールに戻る
+            //
             gameObject.SetActive(false);
         }
     }
