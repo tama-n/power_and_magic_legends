@@ -7,7 +7,7 @@ using UnityEngine;
 //Playerのレーン移動をするプログラム将来的にはジョイコンのジャイロで
 public class PlayerLaneControl : MonoBehaviour
 {
-    private List<Joycon> joycons;
+    private Joycon leftJoycon;
 
     public Vector3 accel;
     public Quaternion orientation;
@@ -24,9 +24,19 @@ public class PlayerLaneControl : MonoBehaviour
 
     void Start()
     {
-        // get the public Joycon array attached to the JoyconManager in scene
-        joycons = JoyconManager.Instance.j;
+        if (JoyconManager.Instance == null) return;
+
+        foreach (Joycon j in JoyconManager.Instance.j)
+        {
+            if (j.isLeft)
+            {
+                leftJoycon = j;
+                Debug.Log("移動用：左Joy-Con取得");
+                break;
+            }
+        }
     }
+
     void Update()
     {
         Keyboard keyboard = Keyboard.current;
@@ -49,13 +59,13 @@ public class PlayerLaneControl : MonoBehaviour
                 }
             }
         }
+        
         float threshold = 0.7f;
 
-        if (joycons != null && joycons.Count > 0)
+        if (leftJoycon != null)
         {
-            Joycon j = joycons[jc_ind];
-            accel = j.GetAccel();
-            // 左へ傾けたら左移動
+            accel = leftJoycon.GetAccel();
+
             if (accel.x < -threshold && !tiltedLeft)
             {
                 if (currentLane > 0)
@@ -66,7 +76,6 @@ public class PlayerLaneControl : MonoBehaviour
                 }
             }
 
-            // 右へ傾けたら右移動
             if (accel.x > threshold && !tiltedRight)
             {
                 if (currentLane < 2)
@@ -82,7 +91,6 @@ public class PlayerLaneControl : MonoBehaviour
                 tiltedRight = false;
                 tiltedLeft = false;
             }
-
         }
 
         Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);

@@ -25,14 +25,38 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
 
+    private Joycon rightJoycon;
+
+    [SerializeField] private float swingThreshold = 2.5f;
+
     [Header("リーチの可視化")]
     [SerializeField] private LineRenderer meleeReachVis;
     [SerializeField] private LineRenderer magicRangeVis;
     private int meleeCircleSegments = 50;
 
+    private enum AttackMode
+    {
+        Close,
+        Range
+    }
+
+    private AttackMode currentMode = AttackMode.Close;
+
     void Start()
     {
         InitializeVisualization();
+    
+        if (JoyconManager.Instance == null) return;
+
+        foreach (Joycon j in JoyconManager.Instance.j)
+        {
+            if (!j.isLeft)
+            {
+                rightJoycon = j;
+                Debug.Log("攻撃用：右Joy-Con取得");
+                break;
+            }
+        }
     }
 
     void Update()
@@ -45,8 +69,24 @@ public class PlayerController : MonoBehaviour
         updateMeleeCircle();
         updateMagicLine();
 
+        if(rightJoycon != null) {
+            // Rボタンで近距離モード
+            if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_1))
+            {
+                currentMode = AttackMode.Close;
+                Debug.Log("近距離モード");
+            }
+
+            // ZRボタンで遠距離モード
+            if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_2))
+            {
+                currentMode = AttackMode.Range;
+                Debug.Log("遠距離モード");
+            }
+        }
+
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null)
+        if (keyboard != null || rightJoycon != null)
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
             if (keyboard.qKey.wasPressedThisFrame) {
@@ -59,10 +99,19 @@ public class PlayerController : MonoBehaviour
                     Debug.Log($"魔法攻撃はクールタイム中です。残り時間: {magicCooldownTimer:F1}秒");
                 }
             }
-            if (keyboard.eKey.wasPressedThisFrame) {
+            if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing())) {
                 PerformCloseAttack(); 
             }
         }
+    }
+
+    private bool IsJoyconSwing()
+    {
+        if (rightJoycon == null) return false;
+
+        Vector3 accel = rightJoycon.GetAccel();
+
+        return accel.magnitude >= swingThreshold;
     }
 
     //攻撃範囲の可視化
