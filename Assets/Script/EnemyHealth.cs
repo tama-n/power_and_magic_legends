@@ -9,6 +9,9 @@ public class EnemyHealth : MonoBehaviour
 
     [SerializeField] private Slider hpSlider; //HPバーのスライダー
 
+    [Header("スコア減少量")]
+    [SerializeField] private int decScoreAmount = 300;
+
     //敵が出現もしくは復活するたびにHPを満タンにリセット
     void OnEnable()
     {
@@ -38,7 +41,6 @@ public class EnemyHealth : MonoBehaviour
     {
         Debug.Log($"{gameObject.name} を倒した！");
 
-        // 敵を倒したのでスコア+100
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.AddScore(100);
@@ -48,16 +50,22 @@ public class EnemyHealth : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    //プレイヤーに接触したときのスコア減点処理
-    private void OnCollisionEnter(Collision collision)
+    //ぶつかったらスコア減点
+    void OnCollisionEnter(Collision collision)
     {
+        if(hp <= 0)
+        {
+            return;
+        }
+
         if (collision.gameObject.CompareTag("Player"))
         {
+            hp = 0;
             if (ScoreManager.Instance != null)
             {
-                ScoreManager.Instance.DecreaseScore(100);
+                ScoreManager.Instance.DecreaseScore(decScoreAmount);
             }
-            //ぶつかった時もプールに戻る
+            //
             gameObject.SetActive(false);
         }
     }
