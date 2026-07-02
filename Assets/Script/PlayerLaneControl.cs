@@ -15,7 +15,7 @@ public class PlayerLaneControl : MonoBehaviour
     private bool tiltedLeft = false;
     public int jc_ind = 0;
     // 各レーンのX座標
-    private float[] lanePositions = new float[] { 60f, 75f, 91.5f };
+    private float[] lanePositions = new float[] { 60f, 75f, 91f };
 
     // 現在のレーンインデックス（0: 左, 1: 中央, 2: 右）
     private int currentLane = 1;
