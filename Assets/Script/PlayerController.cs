@@ -29,6 +29,11 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float swingThreshold = 2.5f;
 
+    [Header("リーチの可視化")]
+    [SerializeField] private LineRenderer meleeReachVis;
+    [SerializeField] private LineRenderer magicRangeVis;
+    private int meleeCircleSegments = 50;
+
     private enum AttackMode
     {
         Close,
@@ -39,6 +44,8 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        InitializeVisualization();
+    
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -58,6 +65,9 @@ public class PlayerController : MonoBehaviour
         {
             magicCooldownTimer -= Time.deltaTime;
         }
+
+        updateMeleeCircle();
+        updateMagicLine();
 
         if(rightJoycon != null) {
             // Rボタンで近距離モード
@@ -102,6 +112,92 @@ public class PlayerController : MonoBehaviour
         Vector3 accel = rightJoycon.GetAccel();
 
         return accel.magnitude >= swingThreshold;
+    }
+
+    //攻撃範囲の可視化
+    private void InitializeVisualization()
+    {
+        if(meleeReachVis != null)
+        {
+            meleeReachVis.enabled = true; 
+            meleeReachVis.positionCount = meleeCircleSegments + 1;
+            meleeReachVis.useWorldSpace = true;
+            meleeReachVis.endWidth = 0.1f;
+            meleeReachVis.startWidth = meleeReachVis.endWidth;
+        }
+
+        if(magicRangeVis != null)
+        {
+            magicRangeVis.enabled = true;
+            magicRangeVis.positionCount = 2;
+            magicRangeVis.useWorldSpace = true;
+            magicRangeVis.endWidth = rangeAttackRadius * 2f;
+            magicRangeVis.startWidth = magicRangeVis.endWidth;
+        }
+        updateMeleeCircle();
+        updateMagicLine();
+    }
+
+    //近距離攻撃の範囲円の描画
+    private void updateMeleeCircle()
+    {
+        if (meleeReachVis == null) return;
+
+        float groundY = transform.position.y + 0.02f;
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+            groundY = transform.position.y + capsule.center.y - (capsule.height / 2f) + 0.02f;
+        }
+
+        Vector3 center = transform.position + transform.forward;
+        center.y = groundY;
+
+        for (int i = 0; i <= meleeCircleSegments; i++)
+        {
+            float angle = (float)i / meleeCircleSegments * Mathf.PI * 2f;
+            float x = Mathf.Cos(angle) * closeRange;
+            float z = Mathf.Sin(angle) * closeRange;
+
+            Vector3 pointPosition = new Vector3(center.x + x, center.y, center.z + z);
+            meleeReachVis.SetPosition(i, pointPosition);
+        }
+    }
+
+    //魔法の範囲描画
+    private void updateMagicLine()
+    {
+        if (magicRangeVis == null) return;
+
+        Vector3 origin = transform.position;
+        if (attackPoint != null)
+        {
+            origin = (attackPoint == transform) ? transform.position + transform.forward * 1.5f : attackPoint.position;
+        }
+
+        //魔法が届く限界の座標
+        Vector3 targetCenter = origin + transform.forward * rangeAttackDistance;
+        Vector3 rightDirection = transform.right;
+        float totalLineWidth = 20.0f;
+
+        float groundY = transform.position.y + 0.005f;
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+            groundY = transform.position.y + capsule.center.y - (capsule.height / 2f) + 0.005f;
+        }
+
+        Vector3 lineLeft = targetCenter - rightDirection * totalLineWidth;
+        Vector3 lineRight = targetCenter + rightDirection * totalLineWidth;
+
+        lineLeft.y = groundY;
+        lineRight.y = groundY;
+
+        magicRangeVis.SetPosition(0, lineLeft);
+        magicRangeVis.SetPosition(1, lineRight);
+
+        magicRangeVis.endWidth = 0.1f;
+        magicRangeVis.startWidth = magicRangeVis.endWidth;
     }
 
     private void PerformCloseAttack()
