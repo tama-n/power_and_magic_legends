@@ -7,24 +7,23 @@ public class EnemyManager : MonoBehaviour
     public GameObject enemyPrefab;
 
     [Header("プールの設定")]
-    public int poolSize = 30;         // 用意する敵の数
-    public float spawnInterval = 1.5f; // 出現する間隔（秒）
+    public int poolSize = 30;         //用意する敵の数
+    public float spawnInterval = 1.5f; //出現する間隔（秒）
 
     [Header("出現位置の設定")]
-    public float spawnZ = 20f;        // 奥の出現Z座標
-    public float[] laneXPositions = { -5f, 0f, 5f }; // 左・中央・右レーンのX座標
+    public float spawnZ = 20f;        //奥の出現Z座標
+    public float[] laneXPositions = { -5f, 0f, 5f }; //左・中央・右レーンのX座標
 
     private Queue<GameObject> enemyPool;
     private float timer;
 
     void Start()
     {
-        // プールの初期化（あらかじめ指定数だけ生成して非アクティブにしておく）
         enemyPool = new Queue<GameObject>();
         for (int i = 0; i < poolSize; i++)
         {
             GameObject enemy = Instantiate(enemyPrefab);
-            enemy.SetActive(false); // 画面から隠す
+            enemy.SetActive(false); 
             enemyPool.Enqueue(enemy);
         }
     }
@@ -32,9 +31,17 @@ public class EnemyManager : MonoBehaviour
     void Update()
     {
         timer += Time.deltaTime;
+        float currentSpawnInterval = spawnInterval;
 
-        // 一定時間ごとに敵を出現させる
-        if (timer >= spawnInterval)
+        if(WaveManager.Instance != null)
+        {
+            int wave = WaveManager.Instance.GetCurrentWave();
+            float calculatedInterval = spawnInterval - (wave - 1) * WaveManager.Instance.GetSpawnIntervalDecreasePerWave();
+            currentSpawnInterval = Mathf.Max(calculatedInterval, 0.4f); 
+        }
+
+        //一定時間ごとに敵を出現させる
+        if (timer >= currentSpawnInterval)
         {
             SpawnEnemy();
             timer = 0f;
