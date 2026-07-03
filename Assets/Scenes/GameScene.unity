@@ -1480,7 +1480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3365c74c81235cf468bdf0e4a44ed53d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
-  enemyPrefab: {fileID: 3510688202138779085, guid: 2b21da2bffff3fa44a4be21928102a2a, type: 3}
+  enemyPrefab: {fileID: 5636326907976725990, guid: 931920dbdc2296c4e8d2fb3ef42b11c9, type: 3}
   poolSize: 60
   spawnInterval: 3
   spawnZ: 120
@@ -2319,6 +2319,7 @@ MonoBehaviour:
   rangeAttackRadius: 3
   attackPoint: {fileID: 1343639012}
   magicCooldown: 3
+  swingThreshold: 2.5
   meleeReachVis: {fileID: 166201353}
   magicRangeVis: {fileID: 1309647713}
 --- !u!1 &1459793228
