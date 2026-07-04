@@ -5,6 +5,7 @@ public class EnemyManager : MonoBehaviour
 {
     [Header("敵のプレハブ")]
     public GameObject enemyPrefab;
+    public GameObject middleBossPrefab;
 
     [Header("プールの設定")]
     public int poolSize = 30;         //用意する敵の数
@@ -16,6 +17,9 @@ public class EnemyManager : MonoBehaviour
 
     private Queue<GameObject> enemyPool;
     private float timer;
+
+    private bool hasSpawnedBoss = false;
+    private GameObject middleBoss = null;
 
     void Start()
     {
@@ -33,7 +37,20 @@ public class EnemyManager : MonoBehaviour
         timer += Time.deltaTime;
         float currentSpawnInterval = spawnInterval;
 
-        if(WaveManager.Instance != null)
+        //中ボスの出現
+        if (WaveManager.Instance != null)
+        {
+            int wave = WaveManager.Instance.GetCurrentWave();
+
+            if (wave == 4 && hasSpawnedBoss == false)
+            {
+                SpawnMiddleBoss(); 
+                hasSpawnedBoss = true; 
+            }
+        }
+
+        //スライムの出現
+        if (WaveManager.Instance != null)
         {
             int wave = WaveManager.Instance.GetCurrentWave();
             float calculatedInterval = spawnInterval - (wave - 1) * WaveManager.Instance.GetSpawnIntervalDecreasePerWave();
@@ -48,26 +65,48 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+    //スライムを出現させる関数
     void SpawnEnemy()
     {
-        // キューの先頭から敵を取り出す
-        GameObject enemy = enemyPool.Dequeue();
+        if (enemyPool.Count == 0) return;
 
-        // もしその敵が非アクティブ（現在使われていない）なら再利用する
-        if (!enemy.activeInHierarchy)
+        //ランダムにレーンを決定
+        int randomLane = Random.Range(0, laneXPositions.Length);
+
+        //中ボスがいるとき、スライムは真ん中のレーンに出現しない
+        if (middleBoss != null && randomLane == 1)
         {
-            // レーンをランダムに決定
-            int randomLaneIndex = Random.Range(0, laneXPositions.Length);
-            float spawnX = laneXPositions[randomLaneIndex];
-
-            // 位置をリセット（Y座標はフィールドの高さに合わせて微調整してください）
-            enemy.transform.position = new Vector3(spawnX, 1f, spawnZ);
-
-            // アクティブにして画面に表示
-            enemy.SetActive(true);
+            if (Random.Range(0, 2) == 0)
+            {
+                randomLane = 0; 
+            }
+            else
+            {
+                randomLane = 2; 
+            }
         }
 
-        // 再びキューの最後尾に追加（次に順番が回ってくる頃には手前で非アクティブになっている想定）
+        float spawnX = laneXPositions[randomLane];
+        GameObject enemy = enemyPool.Dequeue();
+
+        enemy.transform.position = new Vector3(spawnX, 1f, spawnZ);
+        enemy.SetActive(true);
+
         enemyPool.Enqueue(enemy);
+    }
+
+    //中ボスを出現させる関数
+    void SpawnMiddleBoss()
+    {
+        if (middleBossPrefab == null) return;
+
+        int middleLaneIndex = 1;
+        float spawnX = laneXPositions[middleLaneIndex];
+
+        Vector3 spawnPosition = new Vector3(spawnX, 1f, spawnZ);
+        middleBoss = Instantiate(middleBossPrefab, spawnPosition, Quaternion.identity);
+
+        middleBoss.SetActive(true);
+        Debug.Log("中ボスが出現");
     }
 }
