@@ -6,6 +6,7 @@ public class EnemyManager : MonoBehaviour
     [Header("敵のプレハブ")]
     public GameObject enemyPrefab;
     public GameObject middleBossPrefab;
+    public GameObject lastBossPrefab;
 
     [Header("プールの設定")]
     public int poolSize = 30;         //用意する敵の数
@@ -18,8 +19,11 @@ public class EnemyManager : MonoBehaviour
     private Queue<GameObject> enemyPool;
     private float timer;
 
-    private bool hasSpawnedBoss = false;
-    private GameObject middleBoss = null;
+    private bool hasSpawnedBoss = false; //ボスを一体だけ出すため
+    private bool isMiddleBossDefeated = false;
+    private GameObject currentActiveBoss = null;
+    private bool isCurrentBossMiddleBoss = false; //ボスが中ボスならtrue
+
 
     void Start()
     {
@@ -37,15 +41,32 @@ public class EnemyManager : MonoBehaviour
         timer += Time.deltaTime;
         float currentSpawnInterval = spawnInterval;
 
-        //中ボスの出現
+        CheckBossStatus();
+
+        //4wave目と8wave目のボス出現について
         if (WaveManager.Instance != null)
         {
             int wave = WaveManager.Instance.GetCurrentWave();
 
+            //4wave目
             if (wave == 4 && hasSpawnedBoss == false)
             {
                 SpawnMiddleBoss(); 
                 hasSpawnedBoss = true; 
+            }
+
+            //8wave目
+            if(wave == 8 && currentActiveBoss == null && hasSpawnedBoss == true)
+            {
+                if(isMiddleBossDefeated == true)
+                {
+                    SpawnLastBoss();
+                }
+                else
+                {
+                    SpawnMiddleBoss();
+                }
+                hasSpawnedBoss = false;
             }
         }
 
@@ -65,16 +86,38 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
-    //スライムを出現させる関数
+    //中ボスを倒したか判定
+    void CheckBossStatus()
+    {
+        if (isCurrentBossMiddleBoss == true && currentActiveBoss != null && currentActiveBoss.activeSelf == false)
+        {
+            EnemyHealth bossHealth = currentActiveBoss.GetComponent<EnemyHealth>();
+            if (bossHealth != null)
+            {
+                if (bossHealth.isDefeatedByPlayer == true)
+                {
+                    isMiddleBossDefeated = true;
+                    Debug.Log("中ボスは倒された。");
+                }
+                else
+                {
+                    Debug.Log("中ボスは倒せなかった。");
+                }
+            }
+
+            isCurrentBossMiddleBoss = false;
+            currentActiveBoss = null;
+        }
+    }
+    
     void SpawnEnemy()
     {
         if (enemyPool.Count == 0) return;
 
-        //ランダムにレーンを決定
         int randomLane = Random.Range(0, laneXPositions.Length);
 
         //中ボスがいるとき、スライムは真ん中のレーンに出現しない
-        if (middleBoss != null && randomLane == 1)
+        if (currentActiveBoss != null && randomLane == 1)
         {
             if (Random.Range(0, 2) == 0)
             {
@@ -95,18 +138,30 @@ public class EnemyManager : MonoBehaviour
         enemyPool.Enqueue(enemy);
     }
 
-    //中ボスを出現させる関数
     void SpawnMiddleBoss()
     {
         if (middleBossPrefab == null) return;
 
-        int middleLaneIndex = 1;
-        float spawnX = laneXPositions[middleLaneIndex];
+        float spawnX = laneXPositions[1];
 
         Vector3 spawnPosition = new Vector3(spawnX, 1f, spawnZ);
-        middleBoss = Instantiate(middleBossPrefab, spawnPosition, Quaternion.identity);
-
-        middleBoss.SetActive(true);
+        
+        currentActiveBoss = Instantiate(middleBossPrefab, spawnPosition, Quaternion.identity);
+        currentActiveBoss.SetActive(true);
+        isCurrentBossMiddleBoss = true;
         Debug.Log("中ボスが出現");
+    }
+
+    void SpawnLastBoss()
+    {
+        if (lastBossPrefab == null) return;
+
+        float spawnX = laneXPositions[1];
+
+        Vector3 spawnPosition = new Vector3(spawnX, 1f, spawnZ);
+
+        currentActiveBoss = Instantiate(lastBossPrefab, spawnPosition, Quaternion.identity);
+        currentActiveBoss.SetActive(true);
+        Debug.Log("ラスボスが出現");
     }
 }
