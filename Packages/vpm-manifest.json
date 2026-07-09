@@ -2,17 +2,11 @@
   "dependencies": {
     "jp.lilxyzw.liltoon": {
       "version": "2.3.4"
-    },
-    "jp.lilxyzw.avatar-utils": {
-      "version": "2.1.2"
     }
   },
   "locked": {
     "jp.lilxyzw.liltoon": {
       "version": "2.3.4"
-    },
-    "jp.lilxyzw.avatar-utils": {
-      "version": "2.1.2"
     }
   }
 }
