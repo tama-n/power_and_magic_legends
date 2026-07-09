@@ -1481,6 +1481,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
   enemyPrefab: {fileID: 5636326907976725990, guid: 931920dbdc2296c4e8d2fb3ef42b11c9, type: 3}
+  middleBossPrefab: {fileID: 3510688202138779085, guid: e26226f3470ddcd4ba037f7ca0e8260e, type: 3}
+  lastBossPrefab: {fileID: 3510688202138779085, guid: 7168eaf82263f3148890b44a547c8c12, type: 3}
   poolSize: 60
   spawnInterval: 3
   spawnZ: 120

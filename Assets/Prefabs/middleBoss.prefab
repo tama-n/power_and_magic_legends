@@ -181,7 +181,7 @@ GameObject:
   - component: {fileID: 6341941429198135984}
   - component: {fileID: 8800038247123776996}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: middleBoss
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -197,7 +197,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 75, y: 1.943, z: 104.61792}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1894142591593138519}
@@ -293,7 +293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b274e178a76e34c44b49449a2f21772a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
-  speed: 6
+  speed: 2
   despawnZ: 45
 --- !u!114 &6341941429198135984
 MonoBehaviour:
@@ -307,11 +307,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca5be1e5995b09408bd5a298006e5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 100
-  hp: 0
+  maxHp: 500
   hpSlider: {fileID: 2273065836020963588}
-  decScoreAmount: 300
-  isDefeatedByPlayer: 0
+  decScoreAmount: 800
 --- !u!54 &8800038247123776996
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -337,7 +335,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 116
   m_CollisionDetection: 0
 --- !u!1 &5020264187192370060
 GameObject:

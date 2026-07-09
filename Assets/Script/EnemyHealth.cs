@@ -5,19 +5,22 @@ public class EnemyHealth : MonoBehaviour
 {
     [Header("---敵のHP設定----")]
     [SerializeField] private int maxHp = 100; //インスペクターから設定可
-    private int hp;
+    public int hp;
 
     [SerializeField] private Slider hpSlider; //HPバーのスライダー
 
     [Header("スコア減少量")]
     [SerializeField] private int decScoreAmount = 300;
 
-    //敵が出現もしくは復活するたびにHPを満タンにリセット
+    [HideInInspector] public bool isDefeatedByPlayer = false; //プレイヤーに倒されたかの判定
+
+    //敵が出現するたびにHPを満タンにリセット
     void OnEnable()
     {
         hp = maxHp;
         hpSlider.maxValue = maxHp;
         hpSlider.value = hp;
+        isDefeatedByPlayer = false;
     }
 
     //プレイヤーの攻撃から受けるダメージ処理
@@ -33,6 +36,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (hp <= 0)
         {
+            isDefeatedByPlayer = true;
             Die();
         }
     }
@@ -65,7 +69,6 @@ public class EnemyHealth : MonoBehaviour
             {
                 ScoreManager.Instance.DecreaseScore(decScoreAmount);
             }
-            //
             gameObject.SetActive(false);
         }
     }
