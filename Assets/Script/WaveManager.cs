@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro; 
 using System.Collections.Generic;
 
@@ -36,6 +37,25 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private float speedIncreasePerWave = 0.1f;
     [SerializeField] private float spawnIntervalDecreasePerWave = 0.15f;
 
+    [Header("--- ゲームオーバー画面 ---")]
+    [Tooltip("左目用/右目用カメラなど、各Canvasに置いたゲームオーバーパネルを登録")]
+    [SerializeField] private GameObject[] gameOverPanels;
+    [Tooltip("「GAME CLEAR」「GAME OVER」など見出しを表示するテキスト（任意。使わない場合は空でOK）")]
+    [SerializeField] private TextMeshProUGUI[] resultTitleTexts;
+    [Tooltip("左目用/右目用カメラなど、各Canvasに置いた最終スコア表示テキストを登録")]
+    [SerializeField] private TextMeshProUGUI[] finalScoreTexts;
+
+    [Tooltip("クリア時に表示する見出し文言")]
+    [SerializeField] private string clearTitle = "GAME CLEAR!";
+    [Tooltip("ゲームオーバー時に表示する見出し文言")]
+    [SerializeField] private string gameOverTitle = "GAME OVER...";
+
+    private bool isGameOver = false; // ゲーム終了（クリア/オーバー問わず）の二重発火防止
+
+    [Header("--- デバッグ用 ---")]
+    [Tooltip("ONにすると、Pキーで強制クリア、Oキーで強制ゲームオーバーをテストできる")]
+    [SerializeField] private bool enableDebugKeys = true;
+
     private PlayerController player;
 
     public int GetCurrentWave()
@@ -69,7 +89,17 @@ public class WaveManager : MonoBehaviour
     {
         //最初は25秒の戦闘からスタート
         timer = battleDuration;
+        isGameOver = false;
         upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
+
+        if (gameOverPanels != null)
+        {
+            foreach (GameObject panel in gameOverPanels)
+            {
+                if (panel != null) panel.SetActive(false); //ゲームオーバー画面も最初は非表示
+            }
+        }
+
         Time.timeScale = 1f; //ゲーム再生
 
         //PlayerControllerのスクリプトがアタッチされてるオブジェクト(プレイヤー)を記憶しておく
@@ -80,6 +110,13 @@ public class WaveManager : MonoBehaviour
 
     void Update()
     {
+        if (enableDebugKeys)
+        {
+            HandleDebugKeys();
+        }
+
+        if (isGameOver) return; // ゲーム終了後はカウントダウン等を止める
+
         if (!isUpgrading)
         {
             //戦闘中の25秒のカウントダウン
@@ -104,6 +141,25 @@ public class WaveManager : MonoBehaviour
             {
                 EndUpgradePhase("時間切れ（強化なし）");
             }
+        }
+    }
+
+    //デバッグ用：Pキーで強制クリア、Oキーで強制ゲームオーバー
+    private void HandleDebugKeys()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
+
+        if (keyboard.pKey.wasPressedThisFrame)
+        {
+            Debug.Log("[デバッグ] Pキー：強制ゲームクリア");
+            EndGame(true);
+        }
+
+        if (keyboard.oKey.wasPressedThisFrame)
+        {
+            Debug.Log("[デバッグ] Oキー：強制ゲームオーバー");
+            EndGame(false);
         }
     }
 
@@ -223,8 +279,53 @@ public class WaveManager : MonoBehaviour
     }
     private void FinishGame()
     {
+        EndGame(true); // 全ウェーブクリア
+    }
+
+    // スコアがマイナスになった時などにScoreManagerから呼ばれる（敗北）
+    public void TriggerGameOver()
+    {
+        if (isGameOver) return; // 既に終了処理済みなら何もしない
+        EndGame(false);
+    }
+
+    // クリア/ゲームオーバー共通の終了処理。isCleared で表示を出し分ける
+    private void EndGame(bool isCleared)
+    {
+        if (isGameOver) return;
+        isGameOver = true;
+
         Time.timeScale = 0f; //ゲーム世界を完全にストップ
 
-        Debug.Log("ゲーム終了");
+        Debug.Log(isCleared ? "ゲームクリア" : "ゲームオーバー");
+
+        //スコア画面を表示（左目用・右目用の両方のCanvas）
+        if (gameOverPanels != null)
+        {
+            foreach (GameObject panel in gameOverPanels)
+            {
+                if (panel != null) panel.SetActive(true);
+            }
+        }
+
+        //見出し（GAME CLEAR / GAME OVER）を反映（左目用・右目用の両方）
+        if (resultTitleTexts != null)
+        {
+            string titleString = isCleared ? clearTitle : gameOverTitle;
+            foreach (TextMeshProUGUI text in resultTitleTexts)
+            {
+                if (text != null) text.text = titleString;
+            }
+        }
+
+        //最終スコアをテキストに反映（左目用・右目用の両方）
+        if (finalScoreTexts != null && ScoreManager.Instance != null)
+        {
+            string scoreString = $"SCORE: {ScoreManager.Instance.CurrentScore}";
+            foreach (TextMeshProUGUI text in finalScoreTexts)
+            {
+                if (text != null) text.text = scoreString;
+            }
+        }
     }
 }
