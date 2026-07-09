@@ -159,9 +159,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 4128350220096436336}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 100
+  m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 100
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -295,6 +295,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
   speed: 6
   despawnZ: 45
+  decScoreAmount: 300
 --- !u!114 &6341941429198135984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,7 +310,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHp: 100
   hpSlider: {fileID: 2273065836020963588}
-  decScoreAmount: 300
 --- !u!54 &8800038247123776996
 Rigidbody:
   m_ObjectHideFlags: 0
