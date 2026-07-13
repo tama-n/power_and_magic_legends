@@ -99,6 +99,11 @@ public class PlayerController : MonoBehaviour
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
             if (keyboard.qKey.wasPressedThisFrame) {
+
+                currentMode = AttackMode.Range;
+                UpdateAttackModeIcon();
+                Debug.Log("遠距離モード");
+
                 if (magicCooldownTimer <= 0f)
                 {
                     PerformRangeAttack();
@@ -109,6 +114,9 @@ public class PlayerController : MonoBehaviour
                 }
             }
             if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing())) {
+                currentMode = AttackMode.Close;
+                UpdateAttackModeIcon();
+                Debug.Log("近距離モード");
                 PerformCloseAttack(); 
             }
         }
