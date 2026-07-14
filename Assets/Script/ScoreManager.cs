@@ -5,18 +5,16 @@ public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
-    [Header("---右上のスコア表示UI---")]
+    [Header("右上のスコア表示UI")]
     [Tooltip("左目用/右目用など、複数カメラそれぞれのCanvasに置いたTextMeshProUGUIをここに登録")]
     [SerializeField] private TMP_Text[] scoreTexts;
 
-    [Header("---スコア初期値---")]
-    [Tooltip("即死（開始直後のマイナス判定）を避けるための初期スコア")]
-    [SerializeField] private int startingScore = 1000;
+    [Header("スコア初期値")]
+    [SerializeField] private int startingScore = 0;
 
     private int score = 0;
-    private bool isGameOverTriggered = false; // ゲームオーバーの二重発火防止
+    private bool isGameOverTriggered = false; 
 
-    // 他のスクリプト（GameOver画面など）から現在のスコアを取得できるように公開
     public int CurrentScore => score;
 
     void Awake()
@@ -27,7 +25,6 @@ public class ScoreManager : MonoBehaviour
         }
         else
         {
-            // 万が一シーン内に複数存在した場合の重複防止
             Destroy(gameObject);
             return;
         }
@@ -46,30 +43,16 @@ public class ScoreManager : MonoBehaviour
     public void DecreaseScore(int amount)
     {
         score -= amount;
-        Debug.Log($"スコア減点！ 現在のスコア: {score}");
 
-        // スコアがマイナスになったらゲームオーバー
         if (score < 0)
         {
-            score = 0; // 表示上は0で止める（マイナス表示にしたくない場合）
-            UpdateScoreUI();
-
-            if (!isGameOverTriggered)
-            {
-                isGameOverTriggered = true;
-
-                if (WaveManager.Instance != null)
-                {
-                    WaveManager.Instance.TriggerGameOver();
-                }
-            }
-            return;
+            score = 0; 
         }
-
+        Debug.Log($"スコア減点！ 現在のスコア: {score}");
         UpdateScoreUI();
     }
 
-    // 登録されている全てのスコアテキスト（左目用・右目用カメラのCanvasなど）を更新
+    //スコアテキストを更新
     private void UpdateScoreUI()
     {
         if (scoreTexts == null) return;

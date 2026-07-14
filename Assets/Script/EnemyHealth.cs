@@ -9,6 +9,9 @@ public class EnemyHealth : MonoBehaviour
 
     [SerializeField] private Slider hpSlider; //HPバーのスライダー
 
+    [Header("倒したときのスコア加算量")]
+    [SerializeField] private int getScoreAmount = 100;
+
     [Header("スコア減少量")]
     [SerializeField] private int decScoreAmount = 300;
 
@@ -47,7 +50,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (ScoreManager.Instance != null)
         {
-            ScoreManager.Instance.AddScore(100);
+            ScoreManager.Instance.AddScore(getScoreAmount);
         }
 
         //敵を使いまわすために非アクティブ
