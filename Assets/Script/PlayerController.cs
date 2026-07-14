@@ -21,6 +21,10 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform attackPoint;
 
+    [Header("魔法弾設定")]
+    [SerializeField] private GameObject magicProjectilePrefab;
+    [SerializeField] private float magicProjectileSpeed = 20f;
+
     [Header("魔法のクールタイム(秒)")]
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
@@ -45,7 +49,12 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         InitializeVisualization();
+<<<<<<< Updated upstream
     
+=======
+        UpdateAttackModeIcon();
+
+>>>>>>> Stashed changes
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -69,7 +78,8 @@ public class PlayerController : MonoBehaviour
         updateMeleeCircle();
         updateMagicLine();
 
-        if(rightJoycon != null) {
+        if (rightJoycon != null)
+        {
             // Rボタンで近距離モード
             if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_1))
             {
@@ -89,7 +99,17 @@ public class PlayerController : MonoBehaviour
         if (keyboard != null || rightJoycon != null)
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
+<<<<<<< Updated upstream
             if (keyboard.qKey.wasPressedThisFrame) {
+=======
+            if (keyboard.qKey.wasPressedThisFrame)
+            {
+
+                currentMode = AttackMode.Range;
+                UpdateAttackModeIcon();
+                Debug.Log("遠距離モード");
+
+>>>>>>> Stashed changes
                 if (magicCooldownTimer <= 0f)
                 {
                     PerformRangeAttack();
@@ -99,8 +119,17 @@ public class PlayerController : MonoBehaviour
                     Debug.Log($"魔法攻撃はクールタイム中です。残り時間: {magicCooldownTimer:F1}秒");
                 }
             }
+<<<<<<< Updated upstream
             if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing())) {
                 PerformCloseAttack(); 
+=======
+            if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing()))
+            {
+                currentMode = AttackMode.Close;
+                UpdateAttackModeIcon();
+                Debug.Log("近距離モード");
+                PerformCloseAttack();
+>>>>>>> Stashed changes
             }
         }
     }
@@ -117,16 +146,16 @@ public class PlayerController : MonoBehaviour
     //攻撃範囲の可視化
     private void InitializeVisualization()
     {
-        if(meleeReachVis != null)
+        if (meleeReachVis != null)
         {
-            meleeReachVis.enabled = true; 
+            meleeReachVis.enabled = true;
             meleeReachVis.positionCount = meleeCircleSegments + 1;
             meleeReachVis.useWorldSpace = true;
             meleeReachVis.endWidth = 0.1f;
             meleeReachVis.startWidth = meleeReachVis.endWidth;
         }
 
-        if(magicRangeVis != null)
+        if (magicRangeVis != null)
         {
             magicRangeVis.enabled = true;
             magicRangeVis.positionCount = 2;
@@ -217,6 +246,64 @@ public class PlayerController : MonoBehaviour
 
     private void PerformRangeAttack()
     {
+        if (magicProjectilePrefab == null)
+        {
+            Debug.LogError("Magic Projectile Prefabが設定されていません。");
+            return;
+        }
+
+        Debug.Log("魔法攻撃をしました");
+
+        magicCooldownTimer = magicCooldown;
+
+        Vector3 origin;
+        Quaternion rotation;
+
+        if (attackPoint != null)
+        {
+            origin = attackPoint == transform
+                ? transform.position + transform.forward * 1.5f
+                : attackPoint.position;
+
+            rotation = attackPoint == transform
+                ? transform.rotation
+                : attackPoint.rotation;
+        }
+        else
+        {
+            origin = transform.position + transform.forward * 1.5f;
+            rotation = transform.rotation;
+        }
+
+        int finalDamage = CalculateDamage(rangeAttackDamage);
+
+        GameObject projectileObject = Instantiate(
+            magicProjectilePrefab,
+            origin,
+            rotation
+        );
+
+        MagicProjectile projectile =
+            projectileObject.GetComponent<MagicProjectile>();
+
+        if (projectile == null)
+        {
+            Debug.LogError(
+                "魔法弾PrefabのルートにMagicProjectile.csが付いていません。"
+            );
+
+            Destroy(projectileObject);
+            return;
+        }
+
+        projectile.Initialize(
+            finalDamage,
+            magicProjectileSpeed,
+            rangeAttackDistance,
+            gameObject
+        );
+    }
+    /*{
         Debug.Log("魔法攻撃をしました");
 
         magicCooldownTimer = magicCooldown; //魔法攻撃のクールタイムをリセット
@@ -248,7 +335,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log($"魔法は当たっていません");
         }
-    }
+    }*/
 
     private int CalculateDamage(int baseDamage)
     {
@@ -310,7 +397,7 @@ public class PlayerController : MonoBehaviour
     //魔法攻撃のクールタイムを短縮(強化)
     public void ReduceMagicCooldown(float amount)
     {
-        magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f); 
+        magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f);
         Debug.Log($"魔法攻撃のクールタイムが {amount} 秒短縮された！ (現在: {magicCooldown}秒)");
     }
 }
