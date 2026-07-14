@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
@@ -34,6 +35,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LineRenderer magicRangeVis;
     private int meleeCircleSegments = 50;
 
+    [Header("攻撃モードUI")]
+    [SerializeField] private Image attackModeIcon;
+    [SerializeField] private Sprite closeModeIcon;
+    [SerializeField] private Sprite rangeModeIcon;
+
     private enum AttackMode
     {
         Close,
@@ -45,6 +51,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         InitializeVisualization();
+        UpdateAttackModeIcon();
     
         if (JoyconManager.Instance == null) return;
 
@@ -74,6 +81,7 @@ public class PlayerController : MonoBehaviour
             if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_1))
             {
                 currentMode = AttackMode.Close;
+                UpdateAttackModeIcon();
                 Debug.Log("近距離モード");
             }
 
@@ -81,6 +89,7 @@ public class PlayerController : MonoBehaviour
             if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_2))
             {
                 currentMode = AttackMode.Range;
+                UpdateAttackModeIcon();
                 Debug.Log("遠距離モード");
             }
         }
@@ -90,6 +99,11 @@ public class PlayerController : MonoBehaviour
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
             if (keyboard.qKey.wasPressedThisFrame) {
+
+                currentMode = AttackMode.Range;
+                UpdateAttackModeIcon();
+                Debug.Log("遠距離モード");
+
                 if (magicCooldownTimer <= 0f)
                 {
                     PerformRangeAttack();
@@ -100,6 +114,9 @@ public class PlayerController : MonoBehaviour
                 }
             }
             if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing())) {
+                currentMode = AttackMode.Close;
+                UpdateAttackModeIcon();
+                Debug.Log("近距離モード");
                 PerformCloseAttack(); 
             }
         }
@@ -112,6 +129,20 @@ public class PlayerController : MonoBehaviour
         Vector3 accel = rightJoycon.GetAccel();
 
         return accel.magnitude >= swingThreshold;
+    }
+
+    private void UpdateAttackModeIcon()
+    {
+        if (attackModeIcon == null) return;
+
+        if (currentMode == AttackMode.Close)
+        {
+            attackModeIcon.sprite = closeModeIcon;
+        }
+        else
+        {
+            attackModeIcon.sprite = rangeModeIcon;
+        }
     }
 
     //攻撃範囲の可視化
