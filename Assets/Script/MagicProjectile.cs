@@ -17,6 +17,23 @@ public class MagicProjectile : MonoBehaviour
     private bool hasHit;
     private bool isInitialized;
 
+    private Rigidbody rb;
+    private Collider projectileCollider;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        projectileCollider = GetComponent<Collider>();
+
+        rb.useGravity = false;
+        rb.isKinematic = true;
+        rb.collisionDetectionMode =
+            CollisionDetectionMode.ContinuousSpeculative;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        projectileCollider.isTrigger = true;
+    }
+
     public void Initialize(
         int damageValue,
         float speedValue,
@@ -28,7 +45,7 @@ public class MagicProjectile : MonoBehaviour
         maxDistance = maxDistanceValue;
         owner = ownerObject;
 
-        startPosition = transform.position;
+        startPosition = rb.position;
         hasHit = false;
         isInitialized = true;
 
@@ -39,9 +56,6 @@ public class MagicProjectile : MonoBehaviour
     {
         if (owner == null) return;
 
-        Collider projectileCollider = GetComponent<Collider>();
-
-        // PlayerControllerが子に付いていても、プレイヤー全体を取得
         Transform ownerRoot = owner.transform.root;
 
         Collider[] ownerColliders =
@@ -49,23 +63,28 @@ public class MagicProjectile : MonoBehaviour
 
         foreach (Collider ownerCollider in ownerColliders)
         {
-            Physics.IgnoreCollision(
-                projectileCollider,
-                ownerCollider,
-                true
-            );
+            if (ownerCollider != null)
+            {
+                Physics.IgnoreCollision(
+                    projectileCollider,
+                    ownerCollider,
+                    true
+                );
+            }
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!isInitialized || hasHit) return;
 
-        transform.position +=
-            transform.forward * speed * Time.deltaTime;
+        Vector3 movement =
+            transform.forward * speed * Time.fixedDeltaTime;
+
+        rb.MovePosition(rb.position + movement);
 
         float traveledDistance =
-            Vector3.Distance(startPosition, transform.position);
+            Vector3.Distance(startPosition, rb.position);
 
         if (traveledDistance >= maxDistance)
         {
@@ -78,24 +97,47 @@ public class MagicProjectile : MonoBehaviour
     {
         if (!isInitialized || hasHit) return;
 
-        Debug.Log(
-            $"魔法弾が接触: {other.name} / Tag: {other.tag}"
-        );
+        // 魔法弾自身を無視
+        if (other.transform == transform ||
+            other.transform.IsChildOf(transform))
+        {
+            return;
+        }
 
-        hasHit = true;
+        // プレイヤー自身を無視
+        if (owner != null)
+        {
+            Transform ownerRoot = owner.transform.root;
+
+            if (other.transform == ownerRoot ||
+                other.transform.IsChildOf(ownerRoot))
+            {
+                return;
+            }
+        }
+
+        Debug.Log(
+            $"魔法弾が接触: {other.name} / " +
+            $"Tag: {other.tag} / Layer: {other.gameObject.layer}"
+        );
 
         EnemyHealth enemy =
             other.GetComponentInParent<EnemyHealth>();
 
-        if (enemy != null)
+        // 敵以外は通過
+        if (enemy == null)
         {
-            enemy.TakeDamage(damage);
+            return;
         }
+
+        hasHit = true;
+
+        enemy.TakeDamage(damage);
 
         if (hitEffectPrefab != null)
         {
             Vector3 hitPosition =
-                other.ClosestPoint(transform.position);
+                other.ClosestPoint(rb.position);
 
             Instantiate(
                 hitEffectPrefab,
