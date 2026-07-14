@@ -22,6 +22,10 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform attackPoint;
 
+    [Header("魔法弾設定")]
+    [SerializeField] private GameObject magicProjectilePrefab;
+    [SerializeField] private float magicProjectileSpeed = 20f;
+
     [Header("魔法のクールタイム(秒)")]
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
@@ -52,7 +56,7 @@ public class PlayerController : MonoBehaviour
     {
         InitializeVisualization();
         UpdateAttackModeIcon();
-    
+
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -76,7 +80,8 @@ public class PlayerController : MonoBehaviour
         updateMeleeCircle();
         updateMagicLine();
 
-        if(rightJoycon != null) {
+        if (rightJoycon != null)
+        {
             // Rボタンで近距離モード
             if (rightJoycon.GetButtonDown(Joycon.Button.SHOULDER_1))
             {
@@ -98,7 +103,8 @@ public class PlayerController : MonoBehaviour
         if (keyboard != null || rightJoycon != null)
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
-            if (keyboard.qKey.wasPressedThisFrame) {
+            if (keyboard.qKey.wasPressedThisFrame)
+            {
 
                 currentMode = AttackMode.Range;
                 UpdateAttackModeIcon();
@@ -113,11 +119,12 @@ public class PlayerController : MonoBehaviour
                     Debug.Log($"魔法攻撃はクールタイム中です。残り時間: {magicCooldownTimer:F1}秒");
                 }
             }
-            if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing())) {
+            if (keyboard.eKey.wasPressedThisFrame || (currentMode == AttackMode.Close && IsJoyconSwing()))
+            {
                 currentMode = AttackMode.Close;
                 UpdateAttackModeIcon();
                 Debug.Log("近距離モード");
-                PerformCloseAttack(); 
+                PerformCloseAttack();
             }
         }
     }
@@ -148,16 +155,16 @@ public class PlayerController : MonoBehaviour
     //攻撃範囲の可視化
     private void InitializeVisualization()
     {
-        if(meleeReachVis != null)
+        if (meleeReachVis != null)
         {
-            meleeReachVis.enabled = true; 
+            meleeReachVis.enabled = true;
             meleeReachVis.positionCount = meleeCircleSegments + 1;
             meleeReachVis.useWorldSpace = true;
             meleeReachVis.endWidth = 0.1f;
             meleeReachVis.startWidth = meleeReachVis.endWidth;
         }
 
-        if(magicRangeVis != null)
+        if (magicRangeVis != null)
         {
             magicRangeVis.enabled = true;
             magicRangeVis.positionCount = 2;
@@ -248,37 +255,62 @@ public class PlayerController : MonoBehaviour
 
     private void PerformRangeAttack()
     {
-        Debug.Log("魔法攻撃をしました");
-
-        magicCooldownTimer = magicCooldown; //魔法攻撃のクールタイムをリセット
-
-        RaycastHit hit; //魔法に当たったオブジェクトの情報を入れる変数
-
-        Vector3 origin = transform.position; 
-        if (attackPoint != null)
+        if (magicProjectilePrefab == null)
         {
-            origin = (attackPoint == transform) ? transform.position + transform.forward * 1.5f : attackPoint.position;
+            Debug.LogError("Magic Projectile Prefabが設定されていません。");
+            return;
         }
 
-        //赤い線を引く(デバック用)
-        Debug.DrawRay(origin, transform.forward * rangeAttackDistance, Color.red, 1.0f);
+        Debug.Log("魔法攻撃をしました");
 
-        //originから半径rangeAttackRadiusの球を、正面に飛ばします
-        if (Physics.SphereCast(origin, rangeAttackRadius, transform.forward, out hit, rangeAttackDistance))
+        magicCooldownTimer = magicCooldown;
+
+        Vector3 origin;
+        Quaternion rotation;
+
+        if (attackPoint != null)
         {
-            Debug.Log($"<color=green>魔法ヒット。 対象: {hit.collider.name} / 距離: {hit.distance}m</color>");
+            origin = attackPoint == transform
+                ? transform.position + transform.forward * 1.5f
+                : attackPoint.position;
 
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>(); //コライダー(オブジェクト)が敵(EnemyHealthスクリプトを持ってる)ならenemyという変数に入れる。
-            if (enemy != null)
-            {
-                int finalDamage = CalculateDamage(rangeAttackDamage);
-                enemy.TakeDamage(finalDamage);
-            }
+            rotation = attackPoint == transform
+                ? transform.rotation
+                : attackPoint.rotation;
         }
         else
         {
-            Debug.Log($"魔法は当たっていません");
+            origin = transform.position + transform.forward * 1.5f;
+            rotation = transform.rotation;
         }
+
+        int finalDamage = CalculateDamage(rangeAttackDamage);
+
+        GameObject projectileObject = Instantiate(
+            magicProjectilePrefab,
+            origin,
+            rotation
+        );
+
+        MagicProjectile projectile =
+            projectileObject.GetComponent<MagicProjectile>();
+
+        if (projectile == null)
+        {
+            Debug.LogError(
+                "魔法弾PrefabのルートにMagicProjectile.csが付いていません。"
+            );
+
+            Destroy(projectileObject);
+            return;
+        }
+
+        projectile.Initialize(
+            finalDamage,
+            magicProjectileSpeed,
+            rangeAttackDistance,
+            gameObject
+        );
     }
 
     private int CalculateDamage(int baseDamage)
@@ -341,7 +373,7 @@ public class PlayerController : MonoBehaviour
     //魔法攻撃のクールタイムを短縮(強化)
     public void ReduceMagicCooldown(float amount)
     {
-        magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f); 
+        magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f);
         Debug.Log($"魔法攻撃のクールタイムが {amount} 秒短縮された！ (現在: {magicCooldown}秒)");
     }
 }

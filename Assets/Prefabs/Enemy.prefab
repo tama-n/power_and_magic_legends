@@ -310,6 +310,7 @@ MonoBehaviour:
   maxHp: 100
   hp: 0
   hpSlider: {fileID: 2273065836020963588}
+  getScoreAmount: 100
   decScoreAmount: 300
   isDefeatedByPlayer: 0
 --- !u!54 &8800038247123776996
