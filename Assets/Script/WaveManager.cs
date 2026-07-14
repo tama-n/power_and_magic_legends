@@ -17,7 +17,7 @@ public class WaveManager : MonoBehaviour
     private bool isUpgrading = false;
 
     [Header("--- UI設定 ---")]
-    [SerializeField] private GameObject upgradePanel;
+    [SerializeField] private GameObject[] upgradePanels;
     [SerializeField] private TextMeshProUGUI timerText; //5秒をカウントダウンする文字用
 
     [SerializeField] private GameObject[] upgradeButtons; //強化ボタンを登録
@@ -90,7 +90,13 @@ public class WaveManager : MonoBehaviour
         //最初は25秒の戦闘からスタート
         timer = battleDuration;
         isGameOver = false;
-        upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
+        if (upgradePanels != null)
+        {
+            foreach (GameObject panel in upgradePanels)
+            {
+                if (panel != null) panel.SetActive(false);
+            }
+        }
 
         if (gameOverPanels != null)
         {
@@ -167,11 +173,17 @@ public class WaveManager : MonoBehaviour
     private void StartUpgradePhase()
     {
         isUpgrading = true;
-        upgradePanel.SetActive(true); //強化画面を表示
         timer = upgradeDuration;       //タイマーを5秒にセット
 
         //敵やプレイヤーの動きをストップ
         Time.timeScale = 0f;
+        if (upgradePanels != null)
+        {
+            foreach (GameObject panel in upgradePanels)
+            {
+                if (panel != null) panel.SetActive(true);
+            }
+        }
 
         //強化ボタンをランダムに3つ選んで表示する
         SelectRandomButtons();
@@ -218,8 +230,14 @@ public class WaveManager : MonoBehaviour
     {
         Debug.Log($"【結果】: {choiceResult} が選ばれました！ゲームを再開します。");
 
+        if (upgradePanels != null)
+        {
+            foreach (GameObject panel in upgradePanels)
+            {
+                if (panel != null) panel.SetActive(false);
+            }
+        }
 
-        upgradePanel.SetActive(false); //強化画面を隠す
         //timer = battleDuration;        //タイマーを25秒にリセット
         isUpgrading = false;
         
