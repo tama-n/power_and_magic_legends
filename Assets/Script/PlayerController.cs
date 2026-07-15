@@ -48,6 +48,18 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float swingThreshold = 2.5f;
 
+    [Header("杖モーション")]
+    [SerializeField] private Transform staffModel;
+
+    [SerializeField] private float staffRaiseAngle = -40f;
+    [SerializeField] private float staffSwingAngle = 90f;
+
+    [SerializeField] private float staffRaiseTime = 0.1f;
+    [SerializeField] private float staffSwingTime = 0.12f;
+    [SerializeField] private float staffReturnTime = 0.15f;
+
+    private Quaternion staffDefaultRotation;
+    private bool isStaffSwinging;
     [Header("リーチの可視化")]
     [SerializeField] private LineRenderer meleeReachVis;
     [SerializeField] private LineRenderer magicRangeVis;
@@ -86,6 +98,11 @@ public class PlayerController : MonoBehaviour
             fistHitbox.EndAttack();
         }
 
+        if (staffModel != null)
+        {
+            staffDefaultRotation = staffModel.localRotation;
+        }
+
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -121,6 +138,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Close;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("近距離モード");
             }
 
@@ -129,6 +147,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Range;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("遠距離モード");
             }
         }
@@ -142,6 +161,7 @@ public class PlayerController : MonoBehaviour
 
                 currentMode = AttackMode.Range;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("遠距離モード");
 
                 if (magicCooldownTimer <= 0f)
@@ -157,6 +177,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Close;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("近距離モード");
                 PerformCloseAttack();
             }
@@ -329,62 +350,20 @@ public class PlayerController : MonoBehaviour
 
     private void PerformRangeAttack()
     {
-        if (magicProjectilePrefab == null)
+        if (isStaffSwinging)
         {
-            Debug.LogError("Magic Projectile Prefabが設定されていません。");
             return;
         }
 
-        Debug.Log("魔法攻撃をしました");
+        if (staffModel == null)
+        {
+            Debug.LogError("Staff Modelが設定されていません。");
+            return;
+        }
 
         magicCooldownTimer = magicCooldown;
 
-        Vector3 origin;
-        Quaternion rotation;
-
-        if (attackPoint != null)
-        {
-            origin = attackPoint == transform
-                ? transform.position + transform.forward * 1.5f
-                : attackPoint.position;
-
-            rotation = attackPoint == transform
-                ? transform.rotation
-                : attackPoint.rotation;
-        }
-        else
-        {
-            origin = transform.position + transform.forward * 1.5f;
-            rotation = transform.rotation;
-        }
-
-        int finalDamage = CalculateDamage(rangeAttackDamage);
-
-        GameObject projectileObject = Instantiate(
-            magicProjectilePrefab,
-            origin,
-            rotation
-        );
-
-        MagicProjectile projectile =
-            projectileObject.GetComponent<MagicProjectile>();
-
-        if (projectile == null)
-        {
-            Debug.LogError(
-                "魔法弾PrefabのルートにMagicProjectile.csが付いていません。"
-            );
-
-            Destroy(projectileObject);
-            return;
-        }
-
-        projectile.Initialize(
-            finalDamage,
-            magicProjectileSpeed,
-            rangeAttackDistance,
-            gameObject
-        );
+        StartCoroutine(StaffSwingCoroutine());
     }
 
     //拳の動き
@@ -456,6 +435,140 @@ public class PlayerController : MonoBehaviour
         fistHitbox.EndAttack();
         isPunching = false;
     }
+
+    private IEnumerator StaffSwingCoroutine()
+    {
+        isStaffSwinging = true;
+
+        Quaternion startRot =
+            staffDefaultRotation;
+
+        Quaternion raiseRot =
+            staffDefaultRotation *
+            Quaternion.Euler(staffRaiseAngle, 0, 0);
+
+        Quaternion swingRot =
+            staffDefaultRotation *
+            Quaternion.Euler(staffSwingAngle, 0, 0);
+
+        // 振り上げ
+        float timer = 0f;
+
+        while (timer < staffRaiseTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffRaiseTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    startRot,
+                    raiseRot,
+                    t);
+
+            yield return null;
+        }
+
+        // 振り下ろし
+        timer = 0f;
+
+        while (timer < staffSwingTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffSwingTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    raiseRot,
+                    swingRot,
+                    t);
+
+            yield return null;
+        }
+
+        // 魔法弾をここで生成すると自然
+        SpawnProjectile();
+
+        // 元へ戻る
+        timer = 0f;
+
+        while (timer < staffReturnTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffReturnTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    swingRot,
+                    startRot,
+                    t);
+
+            yield return null;
+        }
+
+        staffModel.localRotation =
+            startRot;
+
+        isStaffSwinging = false;
+    }
+    private void SpawnProjectile()
+    {
+        if (magicProjectilePrefab == null)
+        {
+            Debug.LogError("Magic Projectile Prefabが設定されていません。");
+            return;
+        }
+
+        Vector3 origin;
+        Quaternion rotation;
+
+        if (attackPoint != null)
+        {
+            origin = attackPoint == transform
+                ? transform.position + transform.forward * 1.5f
+                : attackPoint.position;
+
+            rotation = attackPoint == transform
+                ? transform.rotation
+                : attackPoint.rotation;
+        }
+        else
+        {
+            origin = transform.position + transform.forward * 1.5f;
+            rotation = transform.rotation;
+        }
+
+        int finalDamage = CalculateDamage(rangeAttackDamage);
+
+        GameObject projectileObject = Instantiate(
+            magicProjectilePrefab,
+            origin,
+            rotation
+        );
+
+        MagicProjectile projectile =
+            projectileObject.GetComponent<MagicProjectile>();
+
+        if (projectile == null)
+        {
+            Debug.LogError(
+                "魔法弾PrefabのルートにMagicProjectile.csが付いていません。"
+            );
+
+            Destroy(projectileObject);
+            return;
+        }
+
+        projectile.Initialize(
+            finalDamage,
+            magicProjectileSpeed,
+            rangeAttackDistance,
+            gameObject
+        );
+    }
+
 
     private int CalculateDamage(int baseDamage)
     {
