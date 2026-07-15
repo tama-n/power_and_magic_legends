@@ -129,7 +129,14 @@ public class WaveManager : MonoBehaviour
             timer -= Time.deltaTime;
             if (timer <= 0f)
             {
-                StartUpgradePhase();
+                if (currentWave >= maxWaves)
+                {
+                    FinishGame();
+                }
+                else
+                {
+                    StartUpgradePhase();
+                }
             }
         }
         else
