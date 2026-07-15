@@ -349,14 +349,11 @@ public class PlayerController : MonoBehaviour
     {
         if (cooldownGauge != null)
         {
-            // 残り時間の割合を計算 (0.0 〜 1.0)
-            // 撃った瞬間が 1.0 (満タン) で、クールタイム終了に向けて 0.0 へと時計回りに減っていきます
             cooldownGauge.fillAmount = magicCooldownTimer / magicCooldown;
         }
 
         if (cooldowntext != null)
         {
-            // 小数点以下を切り上げて「3, 2, 1」と整数で表示します
             int remainingSeconds = Mathf.CeilToInt(magicCooldownTimer);
             cooldowntext.text = remainingSeconds.ToString();
         }
@@ -366,7 +363,7 @@ public class PlayerController : MonoBehaviour
     private void ClearCooldownUI()
     {
         if (cooldownGauge != null) cooldownGauge.fillAmount = 0f;
-        if (cooldowntext != null) cooldowntext.text = ""; // 文字を空っぽにする
+        if (cooldowntext != null) cooldowntext.text = ""; 
     }
 
     private void OnDrawGizmosSelected()
