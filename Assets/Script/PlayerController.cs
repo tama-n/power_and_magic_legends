@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -29,6 +30,12 @@ public class PlayerController : MonoBehaviour
     [Header("魔法のクールタイム(秒)")]
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
+    [Header("魔法クールタイム可視化")]
+    [Tooltip("CooldownGauge")]
+    [SerializeField] private Image cooldownGauge;
+
+    [Tooltip("CooldownText")]
+    [SerializeField] private TextMeshProUGUI cooldowntext;
 
     private Joycon rightJoycon;
 
@@ -57,6 +64,8 @@ public class PlayerController : MonoBehaviour
         InitializeVisualization();
         UpdateAttackModeIcon();
 
+        ClearCooldownUI();
+
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -75,6 +84,16 @@ public class PlayerController : MonoBehaviour
         if (magicCooldownTimer > 0f)
         {
             magicCooldownTimer -= Time.deltaTime;
+
+            if (magicCooldownTimer <= 0f)
+            {
+                magicCooldownTimer = 0f;
+                ClearCooldownUI(); // タイマーが0以下になったらUIを消す
+            }
+            else
+            {
+                UpdateCooldownUI(); //残り時間に合わせて更新
+            }
         }
 
         updateMeleeCircle();
@@ -265,6 +284,8 @@ public class PlayerController : MonoBehaviour
 
         magicCooldownTimer = magicCooldown;
 
+        UpdateCooldownUI();
+
         Vector3 origin;
         Quaternion rotation;
 
@@ -321,6 +342,31 @@ public class PlayerController : MonoBehaviour
             return Mathf.RoundToInt(baseDamage * criticalMultiplier);
         }
         return baseDamage;
+    }
+
+    //クールタイムのゲージと秒数を連動
+    private void UpdateCooldownUI()
+    {
+        if (cooldownGauge != null)
+        {
+            // 残り時間の割合を計算 (0.0 〜 1.0)
+            // 撃った瞬間が 1.0 (満タン) で、クールタイム終了に向けて 0.0 へと時計回りに減っていきます
+            cooldownGauge.fillAmount = magicCooldownTimer / magicCooldown;
+        }
+
+        if (cooldowntext != null)
+        {
+            // 小数点以下を切り上げて「3, 2, 1」と整数で表示します
+            int remainingSeconds = Mathf.CeilToInt(magicCooldownTimer);
+            cooldowntext.text = remainingSeconds.ToString();
+        }
+    }
+
+    //UI表示をリセットする
+    private void ClearCooldownUI()
+    {
+        if (cooldownGauge != null) cooldownGauge.fillAmount = 0f;
+        if (cooldowntext != null) cooldowntext.text = ""; // 文字を空っぽにする
     }
 
     private void OnDrawGizmosSelected()
