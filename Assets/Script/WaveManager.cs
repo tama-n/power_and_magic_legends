@@ -42,8 +42,12 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private GameObject[] gameOverPanels;
     [Tooltip("「GAME CLEAR」「GAME OVER」など見出しを表示するテキスト（任意。使わない場合は空でOK）")]
     [SerializeField] private TextMeshProUGUI[] resultTitleTexts;
-    [Tooltip("左目用/右目用カメラなど、各Canvasに置いた最終スコア表示テキストを登録")]
-    [SerializeField] private TextMeshProUGUI[] finalScoreTexts;
+
+    [Tooltip("今回のスコア表示テキスト(FinalScoreText_L)を登録")]
+    [SerializeField] private TextMeshProUGUI finalScoreTextL;
+
+    [Tooltip("ベスト3スコアを表示するテキスト(BestScoreText_R)を登録")]
+    [SerializeField] private TextMeshProUGUI bestScoreTextR;
 
     [Tooltip("クリア時に表示する見出し文言")]
     [SerializeField] private string clearTitle = "GAME CLEAR!";
@@ -298,23 +302,22 @@ public class WaveManager : MonoBehaviour
             float speedMultiple = 1.0f + (currentWave - 1) * speedIncreasePerWave;
             float finalSpeed = 5.0f * speedMultiple;
 
-            // 3. コンソールに大きく色付きで表示する
             Debug.Log($"敵の移動速度: {finalSpeed} (倍率: {speedMultiple}倍) / 出現間隔: {finalInterval}秒");
         }
     }
     private void FinishGame()
     {
-        EndGame(true); // 全ウェーブクリア
+        EndGame(true); 
     }
 
-    // スコアがマイナスになった時などにScoreManagerから呼ばれる（敗北）
+    
     public void TriggerGameOver()
     {
-        if (isGameOver) return; // 既に終了処理済みなら何もしない
+        if (isGameOver) return; 
         EndGame(false);
     }
 
-    // クリア/ゲームオーバー共通の終了処理。isCleared で表示を出し分ける
+    //クリア/ゲームオーバー共通の終了処理
     private void EndGame(bool isCleared)
     {
         if (isGameOver) return;
@@ -343,14 +346,45 @@ public class WaveManager : MonoBehaviour
             }
         }
 
-        //最終スコアをテキストに反映（左目用・右目用の両方）
-        if (finalScoreTexts != null && ScoreManager.Instance != null)
+        //今回のスコアを取得して表示
+        int currentScore = 0;
+        if (ScoreManager.Instance != null)
         {
-            string scoreString = $"SCORE: {ScoreManager.Instance.CurrentScore}";
-            foreach (TextMeshProUGUI text in finalScoreTexts)
-            {
-                if (text != null) text.text = scoreString;
-            }
+            currentScore = ScoreManager.Instance.CurrentScore;
+        }
+
+        if (finalScoreTextL != null)
+        {
+            finalScoreTextL.text = $"YOUR SCORE\n{currentScore}";
+        }
+
+        UpdateAndShowBestScores(currentScore);
+    }
+    private void UpdateAndShowBestScores(int currentScore)
+    {
+        //保存されているこれまでのランキングをロード（デフォルトは0点）
+        List<int> highScores = new List<int>();
+        highScores.Add(PlayerPrefs.GetInt("HighScore_1", 0));
+        highScores.Add(PlayerPrefs.GetInt("HighScore_2", 0));
+        highScores.Add(PlayerPrefs.GetInt("HighScore_3", 0));
+
+        //大きい順（降順）にソート
+        highScores.Add(currentScore);
+        highScores.Sort((a, b) => b.CompareTo(a)); 
+
+        //上位3つを保存
+        PlayerPrefs.SetInt("HighScore_1", highScores[0]);
+        PlayerPrefs.SetInt("HighScore_2", highScores[1]);
+        PlayerPrefs.SetInt("HighScore_3", highScores[2]);
+        PlayerPrefs.Save();
+
+        //テキストにベスト3のランキングを反映
+        if (bestScoreTextR != null)
+        {
+            bestScoreTextR.text = $"BEST SCORES\n\n" +
+                                  $"1st: {highScores[0]}\n" +
+                                  $"2nd: {highScores[1]}\n" +
+                                  $"3rd: {highScores[2]}";
         }
     }
 }
