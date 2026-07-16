@@ -158,6 +158,59 @@ public class PlayerController : MonoBehaviour
         }
 
         Keyboard keyboard = Keyboard.current;
+
+        // キーボード操作
+        if (keyboard != null)
+        {
+            // Qキー：遠距離モードに切り替えて魔法攻撃
+            if (keyboard.qKey.wasPressedThisFrame)
+            {
+                ChangeAttackMode(AttackMode.Range);
+
+                if (magicCooldownTimer <= 0f)
+                {
+                    PerformRangeAttack();
+                }
+                else
+                {
+                    Debug.Log(
+                        $"魔法攻撃はクールタイム中です。" +
+                        $"残り時間: {magicCooldownTimer:F1}秒"
+                    );
+                }
+            }
+
+            // Eキー：近距離モードに切り替えてパンチ
+            if (keyboard.eKey.wasPressedThisFrame)
+            {
+                ChangeAttackMode(AttackMode.Close);
+                PerformCloseAttack();
+            }
+        }
+
+        // Joy-Conを振ったとき
+        if (rightJoycon != null && IsJoyconSwing())
+        {
+            if (currentMode == AttackMode.Close)
+            {
+                PerformCloseAttack();
+            }
+            else if (currentMode == AttackMode.Range)
+            {
+                if (magicCooldownTimer <= 0f)
+                {
+                    PerformRangeAttack();
+                }
+                else
+                {
+                    Debug.Log(
+                        $"魔法攻撃はクールタイム中です。" +
+                        $"残り時間: {magicCooldownTimer:F1}秒"
+                    );
+                }
+            }
+        }
+        /* Keyboard keyboard = Keyboard.current;
         if (keyboard != null || rightJoycon != null)
         {
             //Qキーで遠距離攻撃、Eキーで近距離攻撃(将来的にはジョイコン)
@@ -186,7 +239,7 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("近距離モード");
                 PerformCloseAttack();
             }
-        }
+        } */
     }
 
     private bool IsJoyconSwing()
@@ -575,7 +628,22 @@ public class PlayerController : MonoBehaviour
         );
     }
 
+    private void ChangeAttackMode(AttackMode newMode)
+    {
+        currentMode = newMode;
 
+        UpdateAttackModeIcon();
+        UpdateWeaponDisplay();
+
+        if (currentMode == AttackMode.Close)
+        {
+            Debug.Log("近距離モード");
+        }
+        else
+        {
+            Debug.Log("遠距離モード");
+        }
+    }
     private int CalculateDamage(int baseDamage)
     {
         if (Random.Range(0f, 100f) <= criticalChance)
