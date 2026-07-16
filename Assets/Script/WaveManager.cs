@@ -17,8 +17,8 @@ public class WaveManager : MonoBehaviour
     private bool isUpgrading = false;
 
     [Header("--- UI設定 ---")]
-    [SerializeField] private GameObject upgradePanel;
-    [SerializeField] private TextMeshProUGUI timerText; //5秒をカウントダウンする文字用
+    [SerializeField] private GameObject[] upgradePanels;
+    [SerializeField] private TextMeshProUGUI[] timerTexts; //5秒をカウントダウンする文字用
 
     [SerializeField] private GameObject[] upgradeButtons; //強化ボタンを登録
 
@@ -90,7 +90,9 @@ public class WaveManager : MonoBehaviour
         //最初は25秒の戦闘からスタート
         timer = battleDuration;
         isGameOver = false;
-        upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
+
+        //upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
+        SetUpgradePanelsActive(false);
 
         if (gameOverPanels != null)
         {
@@ -132,9 +134,20 @@ public class WaveManager : MonoBehaviour
             timer -= Time.unscaledDeltaTime;
 
             //画面に「残り 4.2秒」のように整数で表示
-            if (timerText != null)
+            //if (timerText != null)
+            //{
+            //    timerText.text = $"残り時間: {Mathf.CeilToInt(timer)}秒";
+            //}
+            if (timerTexts != null)
             {
-                timerText.text = $"残り時間: {Mathf.CeilToInt(timer)}秒";
+                string textContent = $"残り時間: {Mathf.CeilToInt(timer)}秒";
+                foreach (TextMeshProUGUI text in timerTexts)
+                {
+                    if (text != null)
+                    {
+                        text.text = textContent;
+                    }
+                }
             }
 
             if (timer <= 0f)
@@ -167,7 +180,10 @@ public class WaveManager : MonoBehaviour
     private void StartUpgradePhase()
     {
         isUpgrading = true;
-        upgradePanel.SetActive(true); //強化画面を表示
+
+        //upgradePanel.SetActive(true); //強化画面を表示
+        SetUpgradePanelsActive(true);
+
         timer = upgradeDuration;       //タイマーを5秒にセット
 
         //敵やプレイヤーの動きをストップ
@@ -219,7 +235,9 @@ public class WaveManager : MonoBehaviour
         Debug.Log($"【結果】: {choiceResult} が選ばれました！ゲームを再開します。");
 
 
-        upgradePanel.SetActive(false); //強化画面を隠す
+        //upgradePanel.SetActive(false); //強化画面を隠す
+        SetUpgradePanelsActive(false);
+
         //timer = battleDuration;        //タイマーを25秒にリセット
         isUpgrading = false;
         
@@ -277,6 +295,20 @@ public class WaveManager : MonoBehaviour
             Debug.Log($"敵の移動速度: {finalSpeed} (倍率: {speedMultiple}倍) / 出現間隔: {finalInterval}秒");
         }
     }
+
+    private void SetUpgradePanelsActive(bool isActive)
+    {
+        if (upgradePanels == null) return;
+
+        foreach (GameObject panel in upgradePanels)
+        {
+            if (panel != null)
+            {
+                panel.SetActive(isActive);
+            }
+        }
+    }
+
     private void FinishGame()
     {
         EndGame(true); // 全ウェーブクリア
@@ -300,31 +332,46 @@ public class WaveManager : MonoBehaviour
         Debug.Log(isCleared ? "ゲームクリア" : "ゲームオーバー");
 
         //スコア画面を表示（左目用・右目用の両方のCanvas）
-        if (gameOverPanels != null)
+        //if (gameOverPanels != null)
+        //{
+        //    foreach (GameObject panel in gameOverPanels)
+        //    {
+        //        if (panel != null) panel.SetActive(true);
+        //    }
+        //}
+
+        ////見出し（GAME CLEAR / GAME OVER）を反映（左目用・右目用の両方）
+        //if (resultTitleTexts != null)
+        //{
+        //    string titleString = isCleared ? clearTitle : gameOverTitle;
+        //    foreach (TextMeshProUGUI text in resultTitleTexts)
+        //    {
+        //        if (text != null) text.text = titleString;
+        //    }
+        //}
+
+        ////最終スコアをテキストに反映（左目用・右目用の両方）
+        //if (finalScoreTexts != null && ScoreManager.Instance != null)
+        //{
+        //    string scoreString = $"SCORE: {ScoreManager.Instance.CurrentScore}";
+        //    foreach (TextMeshProUGUI text in finalScoreTexts)
+        //    {
+        //        if (text != null) text.text = scoreString;
+        //    }
+        //}
+        if (ScoreManager.Instance != null)
         {
-            foreach (GameObject panel in gameOverPanels)
-            {
-                if (panel != null) panel.SetActive(true);
-            }
+            string titleString = isCleared ? clearTitle : gameOverTitle;
+            ScoreManager.Instance.ShowFinalResults(isCleared, titleString, clearTitle, gameOverTitle);
         }
 
-        //見出し（GAME CLEAR / GAME OVER）を反映（左目用・右目用の両方）
+        // 大見出し（GAME CLEAR / GAME OVER）のテキスト一括変更
         if (resultTitleTexts != null)
         {
             string titleString = isCleared ? clearTitle : gameOverTitle;
             foreach (TextMeshProUGUI text in resultTitleTexts)
             {
                 if (text != null) text.text = titleString;
-            }
-        }
-
-        //最終スコアをテキストに反映（左目用・右目用の両方）
-        if (finalScoreTexts != null && ScoreManager.Instance != null)
-        {
-            string scoreString = $"SCORE: {ScoreManager.Instance.CurrentScore}";
-            foreach (TextMeshProUGUI text in finalScoreTexts)
-            {
-                if (text != null) text.text = scoreString;
             }
         }
     }

@@ -66,7 +66,7 @@ public class PlayerController : MonoBehaviour
     private int meleeCircleSegments = 50;
 
     [Header("攻撃モードUI")]
-    [SerializeField] private Image attackModeIcon;
+    [SerializeField] private Image[] attackModeIcons;
     [SerializeField] private Sprite closeModeIcon;
     [SerializeField] private Sprite rangeModeIcon;
 
@@ -251,20 +251,31 @@ public class PlayerController : MonoBehaviour
         return accel.magnitude >= swingThreshold;
     }
 
+    //private void UpdateAttackModeIcon()
+    //{
+    //    if (attackModeIcon == null) return;
+
+    //    if (currentMode == AttackMode.Close)
+    //    {
+    //        attackModeIcon.sprite = closeModeIcon;
+    //    }
+    //    else
+    //    {
+    //        attackModeIcon.sprite = rangeModeIcon;
+    //    }
+    //}
     private void UpdateAttackModeIcon()
     {
-        if (attackModeIcon == null) return;
+        if (attackModeIcons == null) return;
 
-        if (currentMode == AttackMode.Close)
+        foreach (Image icon in attackModeIcons)
         {
-            attackModeIcon.sprite = closeModeIcon;
-        }
-        else
-        {
-            attackModeIcon.sprite = rangeModeIcon;
+            if (icon != null)
+            {
+                icon.sprite = (currentMode == AttackMode.Close) ? closeModeIcon : rangeModeIcon;
+            }
         }
     }
-
     private void UpdateWeaponDisplay()
     {
         bool isCloseMode = currentMode == AttackMode.Close;
@@ -279,6 +290,7 @@ public class PlayerController : MonoBehaviour
             staffObject.SetActive(!isCloseMode);
         }
     }
+
     //攻撃範囲の可視化
     private void InitializeVisualization()
     {

@@ -9,6 +9,11 @@ public class ScoreManager : MonoBehaviour
     [Tooltip("左目用/右目用など、複数カメラそれぞれのCanvasに置いたTextMeshProUGUIをここに登録")]
     [SerializeField] private TMP_Text[] scoreTexts;
 
+    [Header("左右それぞれの最終スコアテキスト")]
+    [SerializeField] private TMP_Text[] finalScoreTexts;
+    [Header("左右それぞれのゲームオーバー/リザルトパネル")]
+    [SerializeField] private GameObject[] gameOverPanels;
+
     [Header("スコア初期値")]
     [SerializeField] private int startingScore = 0;
 
@@ -62,6 +67,27 @@ public class ScoreManager : MonoBehaviour
             if (text != null)
             {
                 text.text = $"SCORE: {score}";
+            }
+        }
+    }
+
+    public void ShowFinalResults(bool isCleared, string titleText, string clearTitle, string gameOverTitle)
+    {
+        // 1. ゲームオーバーパネルを左右同時に表示
+        if (gameOverPanels != null)
+        {
+            foreach (GameObject panel in gameOverPanels)
+            {
+                if (panel != null) panel.SetActive(true);
+            }
+        }
+
+        // 2. 最終スコアテキストを左右同時に更新
+        if (finalScoreTexts != null)
+        {
+            foreach (TMP_Text text in finalScoreTexts)
+            {
+                if (text != null) text.text = $"SCORE: {score}";
             }
         }
     }
