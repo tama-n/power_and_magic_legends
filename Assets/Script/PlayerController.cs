@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using System.Collections;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -17,6 +19,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float closeRange = 2.0f;
     [SerializeField] private float rangeAttackDistance = 50.0f; //魔法の飛距離
 
+    [Header("パンチ設定")]
+    [SerializeField] private Transform fistModel;
+    [SerializeField] private FistHitbox fistHitbox;
+
+    [SerializeField] private float punchDistance = 1.5f;
+    [SerializeField] private float punchForwardDuration = 0.08f;
+    [SerializeField] private float punchReturnDuration = 0.12f;
+    [SerializeField] private float punchCooldown = 0.35f;
+
+    private Vector3 fistDefaultLocalPosition;
+    private bool isPunching;
+    private float punchCooldownTimer;
+
     [Header("魔法攻撃の大きさ")]
     [SerializeField] private float rangeAttackRadius = 1.0f;
 
@@ -29,11 +44,29 @@ public class PlayerController : MonoBehaviour
     [Header("魔法のクールタイム(秒)")]
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
+    [Header("魔法クールタイム可視化")]
+    [Tooltip("CooldownGauge")]
+    [SerializeField] private Image cooldownGauge;
+
+    [Tooltip("CooldownText")]
+    [SerializeField] private TextMeshProUGUI cooldowntext;
 
     private Joycon rightJoycon;
 
     [SerializeField] private float swingThreshold = 2.5f;
 
+    [Header("杖モーション")]
+    [SerializeField] private Transform staffModel;
+
+    [SerializeField] private float staffRaiseAngle = -40f;
+    [SerializeField] private float staffSwingAngle = 90f;
+
+    [SerializeField] private float staffRaiseTime = 0.1f;
+    [SerializeField] private float staffSwingTime = 0.12f;
+    [SerializeField] private float staffReturnTime = 0.15f;
+
+    private Quaternion staffDefaultRotation;
+    private bool isStaffSwinging;
     [Header("リーチの可視化")]
     [SerializeField] private LineRenderer meleeReachVis;
     [SerializeField] private LineRenderer magicRangeVis;
@@ -43,6 +76,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Image attackModeIcon;
     [SerializeField] private Sprite closeModeIcon;
     [SerializeField] private Sprite rangeModeIcon;
+
+    [Header("武器表示")]
+    [SerializeField] private GameObject fistObject;
+    [SerializeField] private GameObject staffObject;
 
     private enum AttackMode
     {
@@ -56,6 +93,24 @@ public class PlayerController : MonoBehaviour
     {
         InitializeVisualization();
         UpdateAttackModeIcon();
+        UpdateWeaponDisplay();
+
+        if (fistModel != null)
+        {
+            fistDefaultLocalPosition = fistModel.localPosition;
+        }
+
+        if (fistHitbox != null)
+        {
+            fistHitbox.EndAttack();
+        }
+
+        if (staffModel != null)
+        {
+            staffDefaultRotation = staffModel.localRotation;
+        }
+
+        ClearCooldownUI();
 
         if (JoyconManager.Instance == null) return;
 
@@ -72,9 +127,24 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (punchCooldownTimer > 0f)
+        {
+            punchCooldownTimer -= Time.deltaTime;
+        }
+
         if (magicCooldownTimer > 0f)
         {
             magicCooldownTimer -= Time.deltaTime;
+
+            if (magicCooldownTimer <= 0f)
+            {
+                magicCooldownTimer = 0f;
+                ClearCooldownUI(); // タイマーが0以下になったらUIを消す
+            }
+            else
+            {
+                UpdateCooldownUI(); //残り時間に合わせて更新
+            }
         }
 
         updateMeleeCircle();
@@ -87,6 +157,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Close;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("近距離モード");
             }
 
@@ -95,6 +166,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Range;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("遠距離モード");
             }
         }
@@ -108,6 +180,7 @@ public class PlayerController : MonoBehaviour
 
                 currentMode = AttackMode.Range;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("遠距離モード");
 
                 if (magicCooldownTimer <= 0f)
@@ -123,6 +196,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentMode = AttackMode.Close;
                 UpdateAttackModeIcon();
+                UpdateWeaponDisplay();
                 Debug.Log("近距離モード");
                 PerformCloseAttack();
             }
@@ -152,6 +226,20 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void UpdateWeaponDisplay()
+    {
+        bool isCloseMode = currentMode == AttackMode.Close;
+
+        if (fistObject != null)
+        {
+            fistObject.SetActive(isCloseMode);
+        }
+
+        if (staffObject != null)
+        {
+            staffObject.SetActive(!isCloseMode);
+        }
+    }
     //攻撃範囲の可視化
     private void InitializeVisualization()
     {
@@ -240,6 +328,32 @@ public class PlayerController : MonoBehaviour
 
     private void PerformCloseAttack()
     {
+        if (isPunching || punchCooldownTimer > 0f)
+        {
+            return;
+        }
+
+        if (fistModel == null || fistHitbox == null)
+        {
+            Debug.LogError(
+                "Fist ModelまたはFist Hitboxが設定されていません。"
+            );
+            return;
+        }
+
+        Debug.Log("近距離攻撃をしました");
+
+        int finalDamage =
+            CalculateDamage(closeAttackDamage);
+
+        punchCooldownTimer = punchCooldown;
+
+        StartCoroutine(
+            PunchCoroutine(finalDamage)
+        );
+    }
+    /*private void PerformCloseAttack()
+    {
         Debug.Log("近距離攻撃をしました");
         Collider[] hitEnemies = Physics.OverlapSphere(transform.position + transform.forward, closeRange);
         foreach (Collider enemyCollider in hitEnemies)
@@ -251,19 +365,180 @@ public class PlayerController : MonoBehaviour
                 enemy.TakeDamage(finalDamage);
             }
         }
-    }
+    }*/
 
     private void PerformRangeAttack()
+    {
+        if (isStaffSwinging)
+        {
+            return;
+        }
+
+        if (staffModel == null)
+        {
+            Debug.LogError("Staff Modelが設定されていません。");
+            return;
+        }
+
+        magicCooldownTimer = magicCooldown;
+
+        StartCoroutine(StaffSwingCoroutine());
+    }
+
+    //拳の動き
+    private IEnumerator PunchCoroutine(int damage)
+    {
+        isPunching = true;
+
+        Vector3 startPosition = fistDefaultLocalPosition;
+        Vector3 endPosition =
+            startPosition + Vector3.forward * punchDistance;
+
+        fistHitbox.BeginAttack(damage);
+
+        // 拳を前へ出す
+        float timer = 0f;
+
+        while (timer < punchForwardDuration)
+        {
+            timer += Time.deltaTime;
+
+            float t = punchForwardDuration > 0f
+                ? Mathf.Clamp01(timer / punchForwardDuration)
+                : 1f;
+
+            float easedT = t * t;
+
+            fistModel.localPosition =
+                Vector3.Lerp(
+                    startPosition,
+                    endPosition,
+                    easedT
+                );
+
+            yield return null;
+        }
+
+        fistModel.localPosition = endPosition;
+
+        // 伸び切った状態で少しだけ判定を残す
+        yield return new WaitForSeconds(0.05f);
+
+        fistHitbox.EndAttack();
+
+        // 拳を元へ戻す
+        timer = 0f;
+
+        while (timer < punchReturnDuration)
+        {
+            timer += Time.deltaTime;
+
+            float t = punchReturnDuration > 0f
+                ? Mathf.Clamp01(timer / punchReturnDuration)
+                : 1f;
+
+            float easedT =
+                1f - Mathf.Pow(1f - t, 2f);
+
+            fistModel.localPosition =
+                Vector3.Lerp(
+                    endPosition,
+                    startPosition,
+                    easedT
+                );
+
+            yield return null;
+        }
+
+        fistModel.localPosition = startPosition;
+        fistHitbox.EndAttack();
+        isPunching = false;
+    }
+
+    private IEnumerator StaffSwingCoroutine()
+    {
+        isStaffSwinging = true;
+
+        Quaternion startRot =
+            staffDefaultRotation;
+
+        Quaternion raiseRot =
+            staffDefaultRotation *
+            Quaternion.Euler(staffRaiseAngle, 0, 0);
+
+        Quaternion swingRot =
+            staffDefaultRotation *
+            Quaternion.Euler(staffSwingAngle, 0, 0);
+
+        // 振り上げ
+        float timer = 0f;
+
+        while (timer < staffRaiseTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffRaiseTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    startRot,
+                    raiseRot,
+                    t);
+
+            yield return null;
+        }
+
+        // 振り下ろし
+        timer = 0f;
+
+        while (timer < staffSwingTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffSwingTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    raiseRot,
+                    swingRot,
+                    t);
+
+            yield return null;
+        }
+
+        // 魔法弾をここで生成すると自然
+        SpawnProjectile();
+
+        // 元へ戻る
+        timer = 0f;
+
+        while (timer < staffReturnTime)
+        {
+            timer += Time.deltaTime;
+
+            float t = timer / staffReturnTime;
+
+            staffModel.localRotation =
+                Quaternion.Slerp(
+                    swingRot,
+                    startRot,
+                    t);
+
+            yield return null;
+        }
+
+        staffModel.localRotation =
+            startRot;
+
+        isStaffSwinging = false;
+    }
+    private void SpawnProjectile()
     {
         if (magicProjectilePrefab == null)
         {
             Debug.LogError("Magic Projectile Prefabが設定されていません。");
             return;
         }
-
-        Debug.Log("魔法攻撃をしました");
-
-        magicCooldownTimer = magicCooldown;
 
         Vector3 origin;
         Quaternion rotation;
@@ -313,6 +588,7 @@ public class PlayerController : MonoBehaviour
         );
     }
 
+
     private int CalculateDamage(int baseDamage)
     {
         if (Random.Range(0f, 100f) <= criticalChance)
@@ -321,6 +597,28 @@ public class PlayerController : MonoBehaviour
             return Mathf.RoundToInt(baseDamage * criticalMultiplier);
         }
         return baseDamage;
+    }
+
+    //クールタイムのゲージと秒数を連動
+    private void UpdateCooldownUI()
+    {
+        if (cooldownGauge != null)
+        {
+            cooldownGauge.fillAmount = magicCooldownTimer / magicCooldown;
+        }
+
+        if (cooldowntext != null)
+        {
+            int remainingSeconds = Mathf.CeilToInt(magicCooldownTimer);
+            cooldowntext.text = remainingSeconds.ToString();
+        }
+    }
+
+    //UI表示をリセットする
+    private void ClearCooldownUI()
+    {
+        if (cooldownGauge != null) cooldownGauge.fillAmount = 0f;
+        if (cooldowntext != null) cooldowntext.text = ""; 
     }
 
     private void OnDrawGizmosSelected()
