@@ -3034,7 +3034,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
   enemyPrefab: {fileID: 5425837401448529159, guid: 931920dbdc2296c4e8d2fb3ef42b11c9, type: 3}
   middleBossPrefab: {fileID: 880803416461852192, guid: b56301f69c2d36d498a93f4a898b424b, type: 3}
-  lastBossPrefab: {fileID: 3510688202138779085, guid: 7168eaf82263f3148890b44a547c8c12, type: 3}
+  lastBossPrefab: {fileID: 3053695665606929431, guid: 07eb87fbc3478224893f6a4f4085b603, type: 3}
   groundY: 0
   poolSize: 60
   spawnInterval: 3
@@ -5960,7 +5960,7 @@ TerrainCollider:
   m_Enabled: 0
   serializedVersion: 2
   m_TerrainData: {fileID: 15600000, guid: 35a521b8ca0f5914aa18bdc9ae9d8711, type: 2}
-  m_EnableTreeColliders: 1
+  m_EnableTreeColliders: 0
 --- !u!218 &1705238244
 Terrain:
   m_ObjectHideFlags: 0
