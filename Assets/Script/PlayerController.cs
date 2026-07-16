@@ -101,6 +101,11 @@ public class PlayerController : MonoBehaviour
         if (staffModel != null)
         {
             staffDefaultRotation = staffModel.localRotation;
+            Debug.Log($"杖の初期回転を保存: {staffDefaultRotation.eulerAngles}");
+        }
+        else
+        {
+            Debug.LogError("Staff Modelが設定されていません。");
         }
 
         if (JoyconManager.Instance == null) return;
@@ -363,6 +368,7 @@ public class PlayerController : MonoBehaviour
 
         magicCooldownTimer = magicCooldown;
 
+        Debug.Log("杖モーション開始");
         StartCoroutine(StaffSwingCoroutine());
     }
 
