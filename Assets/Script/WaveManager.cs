@@ -19,9 +19,8 @@ public class WaveManager : MonoBehaviour
     public bool IsUpgrading => isUpgrading;
 
     [Header("--- UI設定 ---")]
-    [SerializeField] private GameObject[] upgradePanels;
     [SerializeField] private TextMeshProUGUI[] timerTexts; //5秒をカウントダウンする文字用
-
+    [SerializeField] private GameObject[] upgradePanels;
     [SerializeField] private GameObject[] upgradeButtons; //強化ボタンを登録
 
     [Header("--- 強化の上昇値設定 ---")]
@@ -60,10 +59,8 @@ public class WaveManager : MonoBehaviour
 
     private PlayerController player;
 
-    public GameObject[] GetUpgradeButtons()
-    {
-        return upgradeButtons;
-    }
+    [SerializeField] private GameObject[] upgradeButtonsL;
+    [SerializeField] private GameObject[] upgradeButtonsR;
 
     public int GetCurrentWave()
     {
@@ -213,7 +210,7 @@ public class WaveManager : MonoBehaviour
 
     private void SelectFirstActiveButton()
     {
-        foreach (GameObject button in upgradeButtons)
+        foreach (GameObject button in upgradeButtonsL)
         {
             if (button.activeSelf)
             {
@@ -227,25 +224,23 @@ public class WaveManager : MonoBehaviour
     //強化ボタンの中からランダムに3つ選んで表示する関数
     private void SelectRandomButtons()
     {
-        foreach(GameObject btn in upgradeButtons)
+        for (int i = 0; i < upgradeButtonsL.Length; i++)
         {
-            btn.SetActive(false); 
+            upgradeButtonsL[i].SetActive(false);
+            upgradeButtonsR[i].SetActive(false);
         }
 
         List<int> indexList = new List<int> { 0, 1, 2, 3, 4 };
 
         for (int i = 0; i < 3; i++)
         {
-            //残っているインデックスの中からランダムに1つ位置を選ぶ
-            int randomIndex = Random.Range(0, indexList.Count);
+            int randomPosition = Random.Range(0, indexList.Count);
+            int chosenIndex = indexList[randomPosition];
 
-            //選ばれた位置にあるボタンの本来のインデックスを取得
-            int chosenButtonIndex = indexList[randomIndex];
+            upgradeButtonsL[chosenIndex].SetActive(true);
+            upgradeButtonsR[chosenIndex].SetActive(true);
 
-            //そのボタンを表示
-            upgradeButtons[chosenButtonIndex].SetActive(true);
-
-            indexList.RemoveAt(randomIndex);
+            indexList.RemoveAt(randomPosition);
         }
     }
 
