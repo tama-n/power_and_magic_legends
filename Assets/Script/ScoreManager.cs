@@ -1,5 +1,6 @@
-using UnityEngine;
+using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -13,6 +14,11 @@ public class ScoreManager : MonoBehaviour
     [SerializeField] private TMP_Text[] finalScoreTexts;
     [Header("左右それぞれのゲームオーバー/リザルトパネル")]
     [SerializeField] private GameObject[] gameOverPanels;
+
+    [Header("ランキングUI設定")]
+    [SerializeField] private TextMeshProUGUI[] rankingTexts;
+    [Header("ランキングの見出し")]
+    [SerializeField] private string rankingTitle = "スコアランキング"; 
 
     [Header("スコア初期値")]
     [SerializeField] private int startingScore = 0;
@@ -34,7 +40,7 @@ public class ScoreManager : MonoBehaviour
             return;
         }
 
-        score = startingScore; // 初期スコアをセット
+        score = startingScore; 
         UpdateScoreUI();
     }
 
@@ -73,7 +79,7 @@ public class ScoreManager : MonoBehaviour
 
     public void ShowFinalResults(bool isCleared, string titleText, string clearTitle, string gameOverTitle)
     {
-        // 1. ゲームオーバーパネルを左右同時に表示
+
         if (gameOverPanels != null)
         {
             foreach (GameObject panel in gameOverPanels)
@@ -82,12 +88,49 @@ public class ScoreManager : MonoBehaviour
             }
         }
 
-        // 2. 最終スコアテキストを左右同時に更新
         if (finalScoreTexts != null)
         {
             foreach (TMP_Text text in finalScoreTexts)
             {
                 if (text != null) text.text = $"SCORE: {score}";
+            }
+        }
+
+        UpdateAndShowRanking();
+    }
+
+    //今回のスコアを保存し、Top3を更新する関数
+    public void UpdateAndShowRanking()
+    {
+        int currentScore = CurrentScore; 
+
+        //現在のTop3をPlayerPrefsから読み込む
+        List<int> highScores = new List<int>();
+        highScores.Add(PlayerPrefs.GetInt("HighScore1", 0));
+        highScores.Add(PlayerPrefs.GetInt("HighScore2", 0));
+        highScores.Add(PlayerPrefs.GetInt("HighScore3", 0));
+
+        highScores.Add(currentScore);
+        highScores.Sort((a, b) => b.CompareTo(a)); 
+
+        PlayerPrefs.SetInt("HighScore1", highScores[0]);
+        PlayerPrefs.SetInt("HighScore2", highScores[1]);
+        PlayerPrefs.SetInt("HighScore3", highScores[2]);
+        PlayerPrefs.Save(); 
+
+        string rankingString = $"{rankingTitle}\n";
+        rankingString += $"1st : {highScores[0]}\n";
+        rankingString += $"2nd : {highScores[1]}\n";
+        rankingString += $"3rd : {highScores[2]}\n";
+
+        if (rankingTexts != null)
+        {
+            foreach (TextMeshProUGUI text in rankingTexts)
+            {
+                if (text != null)
+                {
+                    text.text = rankingString;
+                }
             }
         }
     }
