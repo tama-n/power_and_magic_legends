@@ -125,7 +125,14 @@ public class WaveManager : MonoBehaviour
             timer -= Time.deltaTime;
             if (timer <= 0f)
             {
-                StartUpgradePhase();
+                if (currentWave >= maxWaves)
+                {
+                    FinishGame(); 
+                }
+                else
+                {
+                    StartUpgradePhase();
+                }
             }
         }
         else
@@ -374,5 +381,16 @@ public class WaveManager : MonoBehaviour
                 if (text != null) text.text = titleString;
             }
         }
+
+        StartCoroutine(AutoReturnCoroutine());
+    }
+
+    private System.Collections.IEnumerator AutoReturnCoroutine()
+    {
+        //10秒待つ
+        yield return new UnityEngine.WaitForSecondsRealtime(10f);
+
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 }
