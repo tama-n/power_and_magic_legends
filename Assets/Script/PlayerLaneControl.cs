@@ -5,8 +5,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //Playerのレーン移動をするプログラム将来的にはジョイコンのジャイロで
+[RequireComponent(typeof(AudioSource))]
 public class PlayerLaneControl : MonoBehaviour
 {
+    [Header("効果音")]
+    [SerializeField] private AudioClip moveSound; // レーン移動音
+
+    private AudioSource audioSource;
+
     private Joycon leftJoycon;
 
     public Vector3 accel;
@@ -24,6 +30,8 @@ public class PlayerLaneControl : MonoBehaviour
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         if (JoyconManager.Instance == null) return;
 
         foreach (Joycon j in JoyconManager.Instance.j)
@@ -48,6 +56,7 @@ public class PlayerLaneControl : MonoBehaviour
                 if (currentLane > 0)
                 {
                     currentLane--;
+                    PlaySound(moveSound);
                 }
             }
 
@@ -56,6 +65,7 @@ public class PlayerLaneControl : MonoBehaviour
                 if (currentLane < 2)
                 {
                     currentLane++;
+                    PlaySound(moveSound);
                 }
             }
         }
@@ -73,6 +83,7 @@ public class PlayerLaneControl : MonoBehaviour
                     currentLane--;
                     tiltedLeft = true;
                     tiltedRight = true;
+                    PlaySound(moveSound);
                 }
             }
 
@@ -83,6 +94,7 @@ public class PlayerLaneControl : MonoBehaviour
                     currentLane++;
                     tiltedRight = true;
                     tiltedLeft = true;
+                    PlaySound(moveSound);
                 }
             }
 
@@ -95,5 +107,12 @@ public class PlayerLaneControl : MonoBehaviour
 
         Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * moveSpeed);
+    }
+
+    //効果音再生の共通処理
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip == null || audioSource == null) return;
+        audioSource.PlayOneShot(clip);
     }
 }

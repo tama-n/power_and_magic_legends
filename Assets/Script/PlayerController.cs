@@ -4,8 +4,16 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using TMPro;
 
+[RequireComponent(typeof(AudioSource))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("効果音")]
+    [SerializeField] private AudioClip moveSound;   // 移動音
+    [SerializeField] private AudioClip punchSound;  // パンチ攻撃音
+    [SerializeField] private AudioClip boostSound;  // 強化選択音
+
+    private AudioSource audioSource;
+
     [Header("攻撃力設定")]
     [SerializeField] private int closeAttackDamage = 100;
     [SerializeField] private int rangeAttackDamage = 100;
@@ -88,6 +96,8 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         InitializeVisualization();
         UpdateAttackModeIcon();
         ClearCooldownUI();
@@ -256,6 +266,19 @@ public class PlayerController : MonoBehaviour
         } */
     }
 
+    //効果音再生の共通処理
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip == null || audioSource == null) return;
+        audioSource.PlayOneShot(clip);
+    }
+
+    //移動時に鳴らす音（移動用スクリプト側から呼び出す）
+    public void PlayMoveSound()
+    {
+        PlaySound(moveSound);
+    }
+
     private bool IsJoyconSwing()
     {
         if (rightJoycon == null) return false;
@@ -407,6 +430,7 @@ public class PlayerController : MonoBehaviour
         }
 
         Debug.Log("近距離攻撃をしました");
+        PlaySound(punchSound);
 
         int finalDamage =
             CalculateDamage(closeAttackDamage);
@@ -749,6 +773,7 @@ public class PlayerController : MonoBehaviour
     //攻撃力強化
     public void BoostAttack(int amount)
     {
+        PlaySound(boostSound);
         closeAttackDamage += amount;
         rangeAttackDamage += amount;
         Debug.Log($"プレイヤーの攻撃力が {amount} アップした！ (近接:{closeAttackDamage} / 遠距離:{rangeAttackDamage})");
@@ -757,6 +782,7 @@ public class PlayerController : MonoBehaviour
     //クリティカル確率をアップ
     public void BoostCriticalChance(float amount)
     {
+        PlaySound(boostSound);
         //100%を超えないようにする
         criticalChance = Mathf.Min(criticalChance + amount, 100f);
         Debug.Log($"プレイヤーのクリティカル率が {amount}% アップした！ (現在:{criticalChance}%)");
@@ -765,6 +791,7 @@ public class PlayerController : MonoBehaviour
     //近距離攻撃のリーチ強化
     public void BoostCloseRange(float amount)
     {
+        PlaySound(boostSound);
         closeRange += amount;
         Debug.Log($"近距離攻撃のリーチが {amount} アップした！ (現在: {closeRange})");
         updateMeleeCircle();
@@ -773,6 +800,7 @@ public class PlayerController : MonoBehaviour
     //魔法攻撃の射程（飛距離）を強化
     public void BoostRangeAttackDistance(float amount)
     {
+        PlaySound(boostSound);
         rangeAttackDistance += amount;
         Debug.Log($"魔法攻撃の射程が {amount} 伸びた！ (現在: {rangeAttackDistance})");
         updateMagicLine();
@@ -781,6 +809,7 @@ public class PlayerController : MonoBehaviour
     //魔法攻撃のクールタイムを短縮(強化)
     public void ReduceMagicCooldown(float amount)
     {
+        PlaySound(boostSound);
         magicCooldown = Mathf.Max(magicCooldown - amount, 0.1f);
         Debug.Log($"魔法攻撃のクールタイムが {amount} 秒短縮された！ (現在: {magicCooldown}秒)");
     }
