@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -43,6 +44,9 @@ public class PlayerController : MonoBehaviour
     [Header("魔法のクールタイム(秒)")]
     [SerializeField] private float magicCooldown = 3.0f;
     private float magicCooldownTimer = 0f;
+    [Header("魔法クールタイムかしか")]
+    [SerializeField] private Image[] cooldownGauges;    
+    [SerializeField] private TextMeshProUGUI[] cooldownTimes;
 
     private Joycon rightJoycon;
 
@@ -86,6 +90,7 @@ public class PlayerController : MonoBehaviour
     {
         InitializeVisualization();
         UpdateAttackModeIcon();
+        ClearCooldownUI();
         UpdateWeaponDisplay();
 
         if (fistModel != null)
@@ -131,6 +136,15 @@ public class PlayerController : MonoBehaviour
         if (magicCooldownTimer > 0f)
         {
             magicCooldownTimer -= Time.deltaTime;
+            if (magicCooldownTimer <= 0f)
+            {
+                magicCooldownTimer = 0f;
+                ClearCooldownUI(); 
+            }
+            else
+            {
+                UpdateCooldownUI(); 
+            }
         }
 
         updateMeleeCircle();
@@ -432,6 +446,7 @@ public class PlayerController : MonoBehaviour
         }
 
         magicCooldownTimer = magicCooldown;
+        UpdateCooldownUI();
 
         Debug.Log("杖モーション開始");
         StartCoroutine(StaffSwingCoroutine());
@@ -664,6 +679,56 @@ public class PlayerController : MonoBehaviour
             return Mathf.RoundToInt(baseDamage * criticalMultiplier);
         }
         return baseDamage;
+    }
+
+    //クールタイム可視化
+    private void UpdateCooldownUI()
+    {
+        
+        if (cooldownGauges != null)
+        {
+            float fillVal = magicCooldownTimer / magicCooldown;
+            foreach (Image gauge in cooldownGauges)
+            {
+                if (gauge != null)
+                {
+                    gauge.fillAmount = fillVal;
+                }
+            }
+        }
+
+        if (cooldownTimes != null)
+        {
+            string timeTextContent = magicCooldownTimer.ToString("F1");
+
+            foreach (TextMeshProUGUI text in cooldownTimes)
+            {
+                if (text != null)
+                {
+                    text.text = timeTextContent;
+                }
+            }
+        }
+    }
+
+    //クールタイムのゲージ消去
+    private void ClearCooldownUI()
+    {
+        if (cooldownGauges != null)
+        {
+            foreach (Image gauge in cooldownGauges)
+            {
+                if (gauge != null) gauge.fillAmount = 0f;
+            }
+        }
+
+        if (cooldownTimes != null)
+        {
+            foreach (TextMeshProUGUI text in cooldownTimes)
+            {
+                if (text != null) text.text = "";
+            }
+        }
     }
 
     private void OnDrawGizmosSelected()
