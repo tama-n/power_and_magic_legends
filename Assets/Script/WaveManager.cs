@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro; 
@@ -15,6 +16,7 @@ public class WaveManager : MonoBehaviour
 
     private float timer = 0f;
     private bool isUpgrading = false;
+    public bool IsUpgrading => isUpgrading;
 
     [Header("--- UI設定 ---")]
     [SerializeField] private GameObject[] upgradePanels;
@@ -57,6 +59,11 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private bool enableDebugKeys = true;
 
     private PlayerController player;
+
+    public GameObject[] GetUpgradeButtons()
+    {
+        return upgradeButtons;
+    }
 
     public int GetCurrentWave()
     {
@@ -164,6 +171,8 @@ public class WaveManager : MonoBehaviour
         }
     }
 
+
+
     //デバッグ用：Pキーで強制クリア、Oキーで強制ゲームオーバー
     private void HandleDebugKeys()
     {
@@ -198,6 +207,21 @@ public class WaveManager : MonoBehaviour
 
         //強化ボタンをランダムに3つ選んで表示する
         SelectRandomButtons();
+
+        SelectFirstActiveButton();
+    }
+
+    private void SelectFirstActiveButton()
+    {
+        foreach (GameObject button in upgradeButtons)
+        {
+            if (button.activeSelf)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(button);
+                break;
+            }
+        }
     }
 
     //強化ボタンの中からランダムに3つ選んで表示する関数
