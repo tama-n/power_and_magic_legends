@@ -164,15 +164,22 @@ public class WaveManager : MonoBehaviour
         }
         else
         {
-            //強化中5秒を測る
-            timer -= Time.unscaledDeltaTime;
-
-            // 🕹️ 強化選択中のみ、Joy-Conのボタン＆モーション入力を監視する
+            // Joy-Conでの選択操作は常に受け付ける
             HandleJoyconUIInput();
+
+            // チュートリアル中はタイマーを減らさない
+            if (isTutorialUpgrade)
+            {
+                return;
+            }
+
+            // 通常ゲームの強化選択だけ5秒カウントする
+            timer -= Time.unscaledDeltaTime;
 
             if (timerTexts != null)
             {
                 string textContent = $"残り時間: {Mathf.CeilToInt(timer)}秒";
+
                 foreach (TextMeshProUGUI text in timerTexts)
                 {
                     if (text != null)
@@ -184,9 +191,49 @@ public class WaveManager : MonoBehaviour
 
             if (timer <= 0f)
             {
-                EndUpgradePhase("時間切れ（強化なし）");
+                SelectFirstUpgradeOnTimeout();
             }
         }
+    }
+
+    private void SelectFirstUpgradeOnTimeout()
+    {
+        // 左側のボタンを優先
+        foreach (GameObject buttonObject in upgradeButtonsL)
+        {
+            if (buttonObject != null && buttonObject.activeSelf)
+            {
+                Debug.Log("時間切れ：左端の強化を自動選択");
+
+                Button button = buttonObject.GetComponent<Button>();
+
+                if (button != null)
+                {
+                    button.onClick.Invoke();
+                }
+
+                return;
+            }
+        }
+
+        // 左側が無ければ右側
+        foreach (GameObject buttonObject in upgradeButtonsR)
+        {
+            if (buttonObject != null && buttonObject.activeSelf)
+            {
+                Button button = buttonObject.GetComponent<Button>();
+
+                if (button != null)
+                {
+                    button.onClick.Invoke();
+                }
+
+                return;
+            }
+        }
+
+        // ボタンが1つも無い場合
+        EndUpgradePhase("TimeUp");
     }
 
     // 🕹️ 右Joy-Conを特定して参照を持つ
@@ -406,14 +453,45 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-    //UIボタンから呼ばれる関数（Joy-Con決定時、またはマウス・キー操作時）
+    
     public void OnSelectUpgradeButton(string upgradeType)
-    {
-        //すでに時間切れになっていたら処理しない
-        if (!isUpgrading) return;
+{
+    if (!isUpgrading) return;
 
-        EndUpgradePhase(upgradeType);
+    // チュートリアル中は強化だけ適用して画面は閉じない
+    if (isTutorialUpgrade)
+    {
+        Debug.Log($"チュートリアル：{upgradeType} を選択");
+
+        switch (upgradeType)
+        {
+            case "AttackUp":
+                player.BoostAttack(attackUpgradeAmount);
+                break;
+
+            case "CriticalUp":
+                player.BoostCriticalChance(criticalUpgradeAmount);
+                break;
+
+            case "CloseRangeUp":
+                player.BoostCloseRange(closeRangeUpgradeAmount);
+                break;
+
+            case "RangeDistUp":
+                player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount);
+                break;
+
+            case "MagicCooldownReduce":
+                player.ReduceMagicCooldown(magicCooldownReduceAmount);
+                break;
+        }
+
+        return;
     }
+
+    // 通常ゲーム
+    EndUpgradePhase(upgradeType);
+}
 
     //強化フェーズの終了とゲーム再開
     private void EndUpgradePhase(string choiceResult)
@@ -543,4 +621,49 @@ public class WaveManager : MonoBehaviour
         Time.timeScale = 1f;
         UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
+
+    // チュートリアル用の強化画面を開いているか
+private bool isTutorialUpgrade = false;
+
+/// <summary>
+/// チュートリアル用：強化選択画面を開く
+/// UpgradePageが表示されている間は閉じない
+/// </summary>
+public void OpenTutorialUpgrade()
+{   
+
+    Debug.Log("OpenTutorialUpgrade が呼ばれました");
+    isTutorialUpgrade = true;
+    isUpgrading = true;
+
+    // 強化パネルを表示
+    SetUpgradePanelsActive(true);
+
+    // 強化候補をランダムに3つ表示
+    SelectRandomButtons();
+
+    // 最初の候補を選択状態にする
+    SelectFirstActiveButton();
+
+    // ゲーム内の動きだけ止める
+    Time.timeScale = 0f;
+
+    Debug.Log("チュートリアル用の強化画面を開きました");
+}
+
+/// <summary>
+/// チュートリアル用：強化選択画面を閉じる
+/// </summary>
+public void CloseTutorialUpgrade()
+{
+    isTutorialUpgrade = false;
+    isUpgrading = false;
+
+    ResetAllButtonScales();
+    SetUpgradePanelsActive(false);
+
+    Time.timeScale = 1f;
+
+    Debug.Log("チュートリアル用の強化画面を閉じました");
+}
 }

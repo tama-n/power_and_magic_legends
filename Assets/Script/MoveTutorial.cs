@@ -20,9 +20,9 @@ public class MoveTutorial : MonoBehaviour
 
     private string[] lines =
     {
-        "体を傾けると左右のレーンに移動できるよ！！",
-        "敵の前に移動して攻撃しよう！！",
-        "もし敵とぶつかったらスコアが減っちゃうよ！！"
+        "体を傾けると\n左右のレーンに\n移動できるよ！！",
+        "敵の前に移動して\n攻撃しよう！！",
+        "もし敵とぶつかったら\nスコアが減っちゃうよ！！"
     };
 
     private Sprite[] faces;
@@ -53,6 +53,6 @@ public class MoveTutorial : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        SceneManager.LoadScene("GameScene");
+        pageManager.ShowUpgradePage();
     }
 }
