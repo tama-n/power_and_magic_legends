@@ -7735,6 +7735,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1166973180}
     - target: {fileID: 1561587769631995633, guid: a2fc5122ef0984644a995af3172c845b, type: 3}
+      propertyPath: closeAttackDamage
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 1561587769631995633, guid: a2fc5122ef0984644a995af3172c845b, type: 3}
       propertyPath: magicProjectileSpeed
       value: 20
       objectReference: {fileID: 0}

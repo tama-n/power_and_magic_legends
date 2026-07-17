@@ -374,5 +374,16 @@ public class WaveManager : MonoBehaviour
                 if (text != null) text.text = titleString;
             }
         }
+
+        StartCoroutine(AutoReturnCoroutine());
+    }
+
+    private System.Collections.IEnumerator AutoReturnCoroutine()
+    {
+        //10秒待つ
+        yield return new UnityEngine.WaitForSecondsRealtime(10f);
+
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 }
