@@ -7,25 +7,28 @@ using UnityEngine.EventSystems;
 public class JoyconUpgradeSelector : MonoBehaviour
 {
     [Header("強化ボタン")]
-    [Tooltip("操作対象になるL側の強化ボタンを、強化内容の順番をそろえて登録")]
+    [Tooltip("操作対象になるL側の強化ボタンを、強化内容の順番をそろえて登録（全5個）")]
     [SerializeField] private GameObject[] upgradeButtonsL;
 
-    [Tooltip("表示同期用のR側の強化ボタンを、L側と同じ順番で登録")]
+    [Tooltip("表示同期用のR側の強化ボタンを、L側と同じ順番で登録（全5個）")]
     [SerializeField] private GameObject[] upgradeButtonsR;
 
     [Header("連続入力防止")]
     [SerializeField] private float inputCooldown = 0.2f;
 
-    [Header("選択中の見た目")]
-    [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color selectedColor = Color.yellow;
+    [Header("選択中の大きさ設定")]
+    [Tooltip("選択されているボタンの大きさ（倍率）")]
+    [SerializeField] private float selectedScale = 1.2f;
+    [Tooltip("選択されていないボタンの大きさ（基本は1.0）")]
+    [SerializeField] private float normalScale = 1.0f;
 
     private List<Joycon> joycons;
     private Joycon rightJoycon;
 
     private float lastInputTime = -10f;
-    private int selectedIndex = 0;
+    private int selectedIndex = 0; // 現在画面に出ているアクティブなボタンリストの中の何番目か(0～2)
     private bool wasUpgrading = false;
+    private bool isInitializedForCurrentPhase = false;
 
     void Start()
     {
@@ -34,89 +37,55 @@ public class JoyconUpgradeSelector : MonoBehaviour
 
     void Update()
     {
-        if (WaveManager.Instance == null)
-        {
-            return;
-        }
+        if (WaveManager.Instance == null) return;
 
         bool isUpgrading = WaveManager.Instance.IsUpgrading;
 
-        // 強化画面が開いた瞬間だけ初期選択
-        if (isUpgrading && !wasUpgrading)
+        // 強化画面が開いた瞬間、または開いているのに初期化されていない場合
+        if (isUpgrading && (!wasUpgrading || !isInitializedForCurrentPhase))
         {
+            if (rightJoycon == null) FindRightJoycon();
+
+            // 選択インデックスを「0（一番左）」にリセット
+            selectedIndex = 0;
             InitializeSelection();
+
+            if (GetActiveButtonsL().Count > 0)
+            {
+                isInitializedForCurrentPhase = true;
+            }
         }
 
-        // 強化画面が閉じた瞬間に色を戻す
+        // 強化画面が閉じた瞬間のクリーンアップ（すべて等倍に戻す）
         if (!isUpgrading && wasUpgrading)
         {
-            ResetAllButtonColors();
+            ResetAllButtonScales();
+            isInitializedForCurrentPhase = false;
         }
 
         wasUpgrading = isUpgrading;
 
-        if (!isUpgrading)
-        {
-            return;
-        }
+        if (!isUpgrading) return;
 
-        // Joy-Conのボタン名を確認するためのデバッグ
-        if (rightJoycon != null)
-        {
-            foreach (Joycon.Button button in
-                     System.Enum.GetValues(typeof(Joycon.Button)))
-            {
-                if (rightJoycon.GetButtonDown(button))
-                {
-                    Debug.Log($"押されたJoy-Conボタン: {button}");
-                }
-            }
-        }
-
-        // 強化画面中はTime.timeScaleが0なのでunscaledTimeを使う
-        if (Time.unscaledTime - lastInputTime < inputCooldown)
-        {
-            return;
-        }
+        // 連続入力の防止
+        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
 
         HandleButtonInput();
     }
 
     private void FindRightJoycon()
     {
-        if (JoyconManager.Instance == null)
-        {
-            Debug.LogWarning(
-                "JoyconManagerがシーンにありません。キーボードのみ使用します。"
-            );
-            return;
-        }
+        if (JoyconManager.Instance == null || JoyconManager.Instance.j == null) return;
 
         joycons = JoyconManager.Instance.j;
-
-        if (joycons == null)
-        {
-            Debug.LogWarning(
-                "Joy-Con一覧を取得できませんでした。キーボードのみ使用します。"
-            );
-            return;
-        }
-
         foreach (Joycon joycon in joycons)
         {
             if (joycon != null && !joycon.isLeft)
             {
                 rightJoycon = joycon;
-                Debug.Log("強化選択用の右Joy-Conを取得しました");
+                Debug.Log("[Joy-Con] 右Joy-Conを正常に認識しました");
                 break;
             }
-        }
-
-        if (rightJoycon == null)
-        {
-            Debug.LogWarning(
-                "右Joy-Conが見つかりません。キーボードのみ使用します。"
-            );
         }
     }
 
@@ -124,74 +93,45 @@ public class JoyconUpgradeSelector : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
 
-        // =========================
-        // キーボード操作
-        // =========================
+        // --- キーボード操作 ---
         if (keyboard != null)
         {
-            // A：前の強化へ
             if (keyboard.aKey.wasPressedThisFrame)
             {
-                Debug.Log("Aキー：前へ");
-
                 MoveSelection(-1);
-
                 lastInputTime = Time.unscaledTime;
                 return;
             }
-
-            // D：次の強化へ
             if (keyboard.dKey.wasPressedThisFrame)
             {
-                Debug.Log("Dキー：次へ");
-
                 MoveSelection(1);
-
                 lastInputTime = Time.unscaledTime;
                 return;
             }
-
-            // F：決定
             if (keyboard.fKey.wasPressedThisFrame)
             {
-                Debug.Log("Fキー：決定");
-
                 SubmitSelectedButton();
-
                 lastInputTime = Time.unscaledTime;
                 return;
             }
         }
 
-        // Joy-Conがない場合、キーボードだけで終了
-        if (rightJoycon == null)
-        {
-            return;
-        }
+        if (rightJoycon == null) return;
 
-        // =========================
-        // 右Joy-Con操作
-        // =========================
-
-        // SL：前へ
+        // --- 右Joy-Con操作 (SL/SRで移動、DPAD_DOWN/下ボタンで決定) ---
         if (rightJoycon.GetButtonDown(Joycon.Button.SL))
         {
             MoveSelection(-1);
-
             lastInputTime = Time.unscaledTime;
         }
-        // SR：次へ
         else if (rightJoycon.GetButtonDown(Joycon.Button.SR))
         {
             MoveSelection(1);
-
             lastInputTime = Time.unscaledTime;
         }
-        // 決定ボタン
         else if (rightJoycon.GetButtonDown(Joycon.Button.DPAD_DOWN))
         {
             SubmitSelectedButton();
-
             lastInputTime = Time.unscaledTime;
         }
     }
@@ -199,225 +139,111 @@ public class JoyconUpgradeSelector : MonoBehaviour
     private void InitializeSelection()
     {
         List<GameObject> activeButtonsL = GetActiveButtonsL();
-
-        if (activeButtonsL.Count == 0)
-        {
-            Debug.LogWarning("初期選択できる強化ボタンがありません");
-            return;
-        }
+        if (activeButtonsL.Count == 0) return;
 
         selectedIndex = 0;
-
-        GameObject firstButton = activeButtonsL[selectedIndex];
-
-        if (EventSystem.current != null)
-        {
-            EventSystem.current.SetSelectedGameObject(null);
-            EventSystem.current.SetSelectedGameObject(firstButton);
-        }
-
-        UpdateButtonColors(activeButtonsL);
-
-        Debug.Log(
-            $"最初の選択: {firstButton.name} " +
-            $"選択位置: 1/{activeButtonsL.Count}"
-        );
+        UpdateButtonScales(activeButtonsL);
     }
 
     private void MoveSelection(int direction)
     {
         List<GameObject> activeButtonsL = GetActiveButtonsL();
-
-        if (activeButtonsL.Count == 0)
-        {
-            Debug.LogWarning("表示中の強化ボタンがありません");
-            return;
-        }
+        if (activeButtonsL.Count == 0) return;
 
         selectedIndex += direction;
 
-        // 一番前からさらに前へ行ったら、一番後ろへ
-        if (selectedIndex < 0)
-        {
-            selectedIndex = activeButtonsL.Count - 1;
-        }
-        // 一番後ろからさらに次へ行ったら、一番前へ
-        else if (selectedIndex >= activeButtonsL.Count)
-        {
-            selectedIndex = 0;
-        }
+        if (selectedIndex < 0) selectedIndex = activeButtonsL.Count - 1;
+        else if (selectedIndex >= activeButtonsL.Count) selectedIndex = 0;
 
-        GameObject selectedObject = activeButtonsL[selectedIndex];
-
-        if (EventSystem.current != null)
-        {
-            EventSystem.current.SetSelectedGameObject(null);
-            EventSystem.current.SetSelectedGameObject(selectedObject);
-        }
-
-        UpdateButtonColors(activeButtonsL);
-
-        Debug.Log(
-            $"選択位置: {selectedIndex + 1}/{activeButtonsL.Count} " +
-            $"選択中: {selectedObject.name}"
-        );
+        UpdateButtonScales(activeButtonsL);
     }
 
     private void SubmitSelectedButton()
     {
         List<GameObject> activeButtonsL = GetActiveButtonsL();
+        if (activeButtonsL.Count == 0) return;
 
-        if (activeButtonsL.Count == 0)
-        {
-            Debug.LogWarning("表示中の強化ボタンがありません");
-            return;
-        }
-
-        selectedIndex =
-            Mathf.Clamp(selectedIndex, 0, activeButtonsL.Count - 1);
-
+        selectedIndex = Mathf.Clamp(selectedIndex, 0, activeButtonsL.Count - 1);
         GameObject selectedObject = activeButtonsL[selectedIndex];
+        Button selectedButton = selectedObject.GetComponent<Button>();
 
-        Button selectedButton =
-            selectedObject.GetComponent<Button>();
-
-        if (selectedButton == null)
+        if (selectedButton != null && selectedButton.interactable)
         {
-            Debug.LogError(
-                $"{selectedObject.name} にButtonコンポーネントがありません"
-            );
-            return;
+            selectedButton.onClick.Invoke();
         }
-
-        if (!selectedButton.interactable)
-        {
-            Debug.LogWarning(
-                $"{selectedObject.name} は操作できない状態です"
-            );
-            return;
-        }
-
-        Debug.Log($"決定: {selectedObject.name}");
-
-        // L側のButtonに設定されたOnClickだけを実行
-        selectedButton.onClick.Invoke();
     }
 
+    // 現在画面に表示されている（Activeな）L側のボタンのみを抽出
     private List<GameObject> GetActiveButtonsL()
     {
-        List<GameObject> activeButtons =
-            new List<GameObject>();
-
-        if (upgradeButtonsL == null)
-        {
-            return activeButtons;
-        }
+        List<GameObject> activeButtons = new List<GameObject>();
+        if (upgradeButtonsL == null) return activeButtons;
 
         foreach (GameObject button in upgradeButtonsL)
         {
-            if (button != null && button.activeInHierarchy)
+            if (button != null && button.activeSelf)
             {
                 activeButtons.Add(button);
             }
         }
-
         return activeButtons;
     }
 
-    private void UpdateButtonColors(
-        List<GameObject> activeButtonsL)
+    // ボタンの大きさを更新する処理
+    private void UpdateButtonScales(List<GameObject> activeButtonsL)
     {
-        // 先に左右すべて通常色へ戻す
-        ResetAllButtonColors();
+        // 1. まずすべてのボタンを通常の大きさにリセット
+        ResetAllButtonScales();
 
-        for (int activeIndex = 0;
-             activeIndex < activeButtonsL.Count;
-             activeIndex++)
+        // 2. 現在アクティブなボタンの中から、選択されているものだけを大きくする
+        for (int activeIndex = 0; activeIndex < activeButtonsL.Count; activeIndex++)
         {
-            GameObject leftObject =
-                activeButtonsL[activeIndex];
+            GameObject leftObject = activeButtonsL[activeIndex];
 
-            // L側全体配列の何番目かを取得
-            int originalIndex =
-                System.Array.IndexOf(
-                    upgradeButtonsL,
-                    leftObject
-                );
+            int originalIndex = System.Array.IndexOf(upgradeButtonsL, leftObject);
+            if (originalIndex < 0) continue;
 
-            if (originalIndex < 0)
+            // 選択中のインデックスなら大きく、それ以外は標準サイズ
+            float targetScale = (activeIndex == selectedIndex) ? selectedScale : normalScale;
+
+            // L側のサイズを変更
+            SetButtonScale(upgradeButtonsL[originalIndex], targetScale);
+
+            // R側のサイズを同期変更
+            if (upgradeButtonsR != null && originalIndex < upgradeButtonsR.Length)
             {
-                continue;
-            }
-
-            Color targetColor =
-                activeIndex == selectedIndex
-                    ? selectedColor
-                    : normalColor;
-
-            // L側の色
-            SetButtonColor(
-                upgradeButtonsL[originalIndex],
-                targetColor
-            );
-
-            // 同じ強化内容のR側の色
-            if (upgradeButtonsR != null &&
-                originalIndex < upgradeButtonsR.Length)
-            {
-                SetButtonColor(
-                    upgradeButtonsR[originalIndex],
-                    targetColor
-                );
+                SetButtonScale(upgradeButtonsR[originalIndex], targetScale);
             }
         }
     }
 
-    private void ResetAllButtonColors()
+    private void ResetAllButtonScales()
     {
         if (upgradeButtonsL != null)
         {
             foreach (GameObject button in upgradeButtonsL)
             {
-                SetButtonColor(button, normalColor);
+                SetButtonScale(button, normalScale);
             }
         }
-
         if (upgradeButtonsR != null)
         {
             foreach (GameObject button in upgradeButtonsR)
             {
-                SetButtonColor(button, normalColor);
+                SetButtonScale(button, normalScale);
             }
         }
     }
 
-    private void SetButtonColor(
-        GameObject buttonObject,
-        Color color)
+    private void SetButtonScale(GameObject buttonObject, float scaleAmount)
     {
-        if (buttonObject == null)
+        if (buttonObject == null) return;
+
+        // RectTransformを介してボタンのLocalScaleを変更する
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        if (rectTransform != null)
         {
-            return;
-        }
-
-        Button button =
-            buttonObject.GetComponent<Button>();
-
-        // ButtonのTarget Graphicを優先
-        if (button != null &&
-            button.targetGraphic != null)
-        {
-            button.targetGraphic.color = color;
-            return;
-        }
-
-        // Target Graphicがない場合はImageを直接変更
-        Image image =
-            buttonObject.GetComponent<Image>();
-
-        if (image != null)
-        {
-            image.color = color;
+            rectTransform.localScale = new Vector3(scaleAmount, scaleAmount, 1f);
         }
     }
 }

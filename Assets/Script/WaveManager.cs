@@ -2,13 +2,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using TMPro; 
+using TMPro;
 using System.Collections.Generic;
 
 public class WaveManager : MonoBehaviour
 {
-
-    public static WaveManager Instance { get; private set; } //シングルトン(https://jp-seemore.com/sys/17625/)
+    public static WaveManager Instance { get; private set; } //シングルトン
 
     [Header("--- タイム設定 ---")]
     [SerializeField] private float battleDuration = 25f; //戦闘時間
@@ -22,6 +21,12 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI[] timerTexts; //5秒をカウントダウンする文字用
     [SerializeField] private GameObject[] upgradePanels;
     [SerializeField] private GameObject[] upgradeButtons; //強化ボタンを登録
+
+    [Header("--- 選択中の大きさ設定（左右パネル共通） ---")]
+    [Tooltip("選択されているボタンの大きさ（倍率）")]
+    [SerializeField] private float selectedScale = 1.2f;
+    [Tooltip("選択されていないボタンの大きさ")]
+    [SerializeField] private float normalScale = 1.0f;
 
     [Header("--- 強化の上昇値設定 ---")]
     [SerializeField] private int attackUpgradeAmount = 30;       //攻撃力の上昇値
@@ -59,8 +64,18 @@ public class WaveManager : MonoBehaviour
 
     private PlayerController player;
 
+    [Header("--- 左右分割UIボタン ---")]
     [SerializeField] private GameObject[] upgradeButtonsL;
     [SerializeField] private GameObject[] upgradeButtonsR;
+
+    [Header("--- ジョイコンモーション設定 ---")]
+    [Tooltip("ジョイコンを振ったと判定する閾値（大きいほど強く振る必要がある。1.5〜3.0あたりで調整）")]
+    [SerializeField] private float shakeThreshold = 2.0f;
+
+    // ===== 🕹️ JoyconLib用内部変数 =====
+    private List<Joycon> joycons;
+    private Joycon rightJoycon;
+    private int currentSelectedIndex = -1; // 現在選択されているボタンの配列インデックス(0~4)
 
     public int GetCurrentWave()
     {
@@ -95,7 +110,6 @@ public class WaveManager : MonoBehaviour
         timer = battleDuration;
         isGameOver = false;
 
-        //upgradePanel.SetActive(false); //強化画面は非表示(戦闘中)
         SetUpgradePanelsActive(false);
 
         if (gameOverPanels != null)
@@ -111,11 +125,20 @@ public class WaveManager : MonoBehaviour
         //PlayerControllerのスクリプトがアタッチされてるオブジェクト(プレイヤー)を記憶しておく
         player = FindObjectOfType<PlayerController>();
 
+        // 🕹️ Joy-Con的初期化取得
+        if (JoyconManager.Instance != null)
+        {
+            joycons = JoyconManager.Instance.j;
+        }
+
         Debug.Log($"ゲーム開始。全{maxWaves}ウェーブ");
     }
 
     void Update()
     {
+        // 🕹️ 毎フレーム右Joy-Conの接続をチェック・確保
+        FetchRightJoycon();
+
         if (enableDebugKeys)
         {
             HandleDebugKeys();
@@ -131,7 +154,7 @@ public class WaveManager : MonoBehaviour
             {
                 if (currentWave >= maxWaves)
                 {
-                    FinishGame(); 
+                    FinishGame();
                 }
                 else
                 {
@@ -144,11 +167,9 @@ public class WaveManager : MonoBehaviour
             //強化中5秒を測る
             timer -= Time.unscaledDeltaTime;
 
-            //画面に「残り 4.2秒」のように整数で表示
-            //if (timerText != null)
-            //{
-            //    timerText.text = $"残り時間: {Mathf.CeilToInt(timer)}秒";
-            //}
+            // 🕹️ 強化選択中のみ、Joy-Conのボタン＆モーション入力を監視する
+            HandleJoyconUIInput();
+
             if (timerTexts != null)
             {
                 string textContent = $"残り時間: {Mathf.CeilToInt(timer)}秒";
@@ -168,7 +189,147 @@ public class WaveManager : MonoBehaviour
         }
     }
 
+    // 🕹️ 右Joy-Conを特定して参照を持つ
+    private void FetchRightJoycon()
+    {
+        if (joycons == null || joycons.Count == 0) return;
+        if (rightJoycon != null) return; // すでに取得済みならスルー
 
+        foreach (var j in joycons)
+        {
+            if (j.isLeft == false) // 左ではない＝右
+            {
+                rightJoycon = j;
+                Debug.Log("右Joy-ConをUI操作用に認識しました。");
+                break;
+            }
+        }
+    }
+
+    // 🕹️ 強化フェーズ中のJoy-Con入力（選択・振り）を処理する
+    private void HandleJoyconUIInput()
+    {
+        if (rightJoycon == null) return;
+
+        // 【Yボタン（左側ボタン）が押されたら選択を左へ】
+        if (rightJoycon.GetButtonDown(Joycon.Button.DPAD_LEFT))
+        {
+            MoveSelection(-1);
+        }
+
+        // 【Aボタン（右側ボタン）が押されたら選択を右へ】
+        if (rightJoycon.GetButtonDown(Joycon.Button.DPAD_RIGHT))
+        {
+            MoveSelection(1);
+        }
+
+        // 【決定：右ジョイコンを振る動き（加速度）を検知】
+        Vector3 accel = rightJoycon.GetAccel();
+        if (accel.magnitude > shakeThreshold)
+        {
+            Debug.Log($"[Joy-Con振りを検知] 勢い: {accel.magnitude} -> 決定します！");
+            SubmitSelection();
+        }
+    }
+
+    // 🕹️ ランダムに出現している（Activeな）ボタンだけを対象にループ移動させる
+    private void MoveSelection(int direction)
+    {
+        if (currentSelectedIndex == -1) return;
+
+        int checkIndex = currentSelectedIndex;
+
+        for (int i = 0; i < upgradeButtonsL.Length; i++)
+        {
+            checkIndex += direction;
+
+            // 配列の端に達したら逆側にループさせる
+            if (checkIndex >= upgradeButtonsL.Length) checkIndex = 0;
+            if (checkIndex < 0) checkIndex = upgradeButtonsL.Length - 1;
+
+            // アクティブなボタンが見つかったらそこに決定
+            if (upgradeButtonsL[checkIndex].activeSelf)
+            {
+                currentSelectedIndex = checkIndex;
+                UpdateVisualSelection();
+                break;
+            }
+        }
+    }
+
+    // 🕹️ 選択されているボタンの見た目（スケール・EventSystemフォーカス）を更新する
+    private void UpdateVisualSelection()
+    {
+        // 1. まずすべてのボタン（LとRの両方）を「通常サイズ」にリセットする
+        ResetAllButtonScales();
+
+        // 2. 現在選択されているインデックスのボタン（L/Rとも）を大きくする
+        if (currentSelectedIndex >= 0 && currentSelectedIndex < upgradeButtonsL.Length)
+        {
+            // --- L側のサイズ変更 ---
+            SetButtonScale(upgradeButtonsL[currentSelectedIndex], selectedScale);
+
+            // --- R側のサイズ変更（完全に同期） ---
+            if (upgradeButtonsR != null && currentSelectedIndex < upgradeButtonsR.Length)
+            {
+                SetButtonScale(upgradeButtonsR[currentSelectedIndex], selectedScale);
+            }
+
+            // EventSystemのフォーカスも一応合わせておく
+            GameObject targetButton = upgradeButtonsL[currentSelectedIndex];
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(targetButton);
+            }
+        }
+    }
+
+    // すべてのボタンのサイズを初期状態（標準サイズ）に戻す処理
+    private void ResetAllButtonScales()
+    {
+        if (upgradeButtonsL != null)
+        {
+            foreach (GameObject button in upgradeButtonsL)
+            {
+                SetButtonScale(button, normalScale);
+            }
+        }
+
+        if (upgradeButtonsR != null)
+        {
+            foreach (GameObject button in upgradeButtonsR)
+            {
+                SetButtonScale(button, normalScale);
+            }
+        }
+    }
+
+    // 対象のGameObjectのサイズ(Scale)を変更するヘルパー関数
+    private void SetButtonScale(GameObject buttonObject, float scaleAmount)
+    {
+        if (buttonObject == null) return;
+
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            rectTransform.localScale = new Vector3(scaleAmount, scaleAmount, 1f);
+        }
+    }
+
+    // 🕹️ ジョイコンが振られた時に、現在選ばれているUIボタンのOnClickイベントを強制実行する
+    private void SubmitSelection()
+    {
+        if (currentSelectedIndex == -1) return;
+
+        GameObject activeLeftButton = upgradeButtonsL[currentSelectedIndex];
+        Button btn = activeLeftButton.GetComponent<Button>();
+
+        if (btn != null && activeLeftButton.activeSelf)
+        {
+            btn.onClick.Invoke(); // インスペクターで設定したOnClick関数（OnSelectUpgradeButton）を呼び出す
+        }
+    }
 
     //デバッグ用：Pキーで強制クリア、Oキーで強制ゲームオーバー
     private void HandleDebugKeys()
@@ -194,7 +355,6 @@ public class WaveManager : MonoBehaviour
     {
         isUpgrading = true;
 
-        //upgradePanel.SetActive(true); //強化画面を表示
         SetUpgradePanelsActive(true);
 
         timer = upgradeDuration;       //タイマーを5秒にセット
@@ -205,17 +365,19 @@ public class WaveManager : MonoBehaviour
         //強化ボタンをランダムに3つ選んで表示する
         SelectRandomButtons();
 
+        // 🕹️ 最初の選択フォーカス位置を自動決定
         SelectFirstActiveButton();
     }
 
     private void SelectFirstActiveButton()
     {
-        foreach (GameObject button in upgradeButtonsL)
+        currentSelectedIndex = -1;
+        for (int i = 0; i < upgradeButtonsL.Length; i++)
         {
-            if (button.activeSelf)
+            if (upgradeButtonsL[i].activeSelf)
             {
-                EventSystem.current.SetSelectedGameObject(null);
-                EventSystem.current.SetSelectedGameObject(button);
+                currentSelectedIndex = i; // 最初に見つかった有効ボタンのインデックスを保存
+                UpdateVisualSelection();
                 break;
             }
         }
@@ -244,9 +406,7 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-
-    //UIボタンから呼ばれる関数
-    //ボタンのインスペクター（OnClick）にこれを登録
+    //UIボタンから呼ばれる関数（Joy-Con決定時、またはマウス・キー操作時）
     public void OnSelectUpgradeButton(string upgradeType)
     {
         //すでに時間切れになっていたら処理しない
@@ -260,13 +420,13 @@ public class WaveManager : MonoBehaviour
     {
         Debug.Log($"【結果】: {choiceResult} が選ばれました！ゲームを再開します。");
 
+        // ★画面を閉じる際、すべてのボタンのサイズを綺麗に通常状態へ戻す
+        ResetAllButtonScales();
 
-        //upgradePanel.SetActive(false); //強化画面を隠す
         SetUpgradePanelsActive(false);
 
-        //timer = battleDuration;        //タイマーを25秒にリセット
         isUpgrading = false;
-        
+
         //ポーズ解除
         Time.timeScale = 1f;
 
@@ -277,23 +437,23 @@ public class WaveManager : MonoBehaviour
         switch (choiceResult)
         {
             case "AttackUp":
-                player.BoostAttack(attackUpgradeAmount); 
+                player.BoostAttack(attackUpgradeAmount);
                 break;
 
             case "CriticalUp":
-                player.BoostCriticalChance(criticalUpgradeAmount); 
+                player.BoostCriticalChance(criticalUpgradeAmount);
                 break;
 
-            case "CloseRangeUp": 
-                player.BoostCloseRange(closeRangeUpgradeAmount); 
+            case "CloseRangeUp":
+                player.BoostCloseRange(closeRangeUpgradeAmount);
                 break;
 
-            case "RangeDistUp":  
-                player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount); 
+            case "RangeDistUp":
+                player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount);
                 break;
 
             case "MagicCooldownReduce":
-                player.ReduceMagicCooldown(magicCooldownReduceAmount); 
+                player.ReduceMagicCooldown(magicCooldownReduceAmount);
                 break;
 
             case "TimeUp":
@@ -301,7 +461,7 @@ public class WaveManager : MonoBehaviour
                 break;
         }
 
-        if(currentWave >= maxWaves)
+        if (currentWave >= maxWaves)
         {
             FinishGame();
         }
@@ -311,13 +471,12 @@ public class WaveManager : MonoBehaviour
             timer = battleDuration;
 
             float nextInterval = 1.5f - (currentWave - 1) * spawnIntervalDecreasePerWave;
-            float finalInterval = Mathf.Max(nextInterval, 0.4f); 
+            float finalInterval = Mathf.Max(nextInterval, 0.4f);
 
-            
             float speedMultiple = 1.0f + (currentWave - 1) * speedIncreasePerWave;
             float finalSpeed = 5.0f * speedMultiple;
 
-            // 3. コンソールに大きく色付きで表示する
+            // コンソールに表示
             Debug.Log($"敵の移動速度: {finalSpeed} (倍率: {speedMultiple}倍) / 出現間隔: {finalInterval}秒");
         }
     }
@@ -357,34 +516,6 @@ public class WaveManager : MonoBehaviour
 
         Debug.Log(isCleared ? "ゲームクリア" : "ゲームオーバー");
 
-        //スコア画面を表示（左目用・右目用の両方のCanvas）
-        //if (gameOverPanels != null)
-        //{
-        //    foreach (GameObject panel in gameOverPanels)
-        //    {
-        //        if (panel != null) panel.SetActive(true);
-        //    }
-        //}
-
-        ////見出し（GAME CLEAR / GAME OVER）を反映（左目用・右目用の両方）
-        //if (resultTitleTexts != null)
-        //{
-        //    string titleString = isCleared ? clearTitle : gameOverTitle;
-        //    foreach (TextMeshProUGUI text in resultTitleTexts)
-        //    {
-        //        if (text != null) text.text = titleString;
-        //    }
-        //}
-
-        ////最終スコアをテキストに反映（左目用・右目用の両方）
-        //if (finalScoreTexts != null && ScoreManager.Instance != null)
-        //{
-        //    string scoreString = $"SCORE: {ScoreManager.Instance.CurrentScore}";
-        //    foreach (TextMeshProUGUI text in finalScoreTexts)
-        //    {
-        //        if (text != null) text.text = scoreString;
-        //    }
-        //}
         if (ScoreManager.Instance != null)
         {
             string titleString = isCleared ? clearTitle : gameOverTitle;
