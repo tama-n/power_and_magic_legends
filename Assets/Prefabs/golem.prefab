@@ -269,7 +269,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHp: 500
   hp: 0
-  hpSlider: {fileID: 0}
+  hpSlider: {fileID: 5164637581479739486}
   getScoreAmount: 1500
   decScoreAmount: 800
   isDefeatedByPlayer: 0
@@ -414,3 +414,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5680474074079925226, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
   m_PrefabInstance: {fileID: 8056925588357846530}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5164637581479739486 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2910321133732009564, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+  m_PrefabInstance: {fileID: 8056925588357846530}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider

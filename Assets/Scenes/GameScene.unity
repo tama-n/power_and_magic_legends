@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 5d5eebce588f65f418757d3cfaa9563c, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -2247,7 +2247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
   enemyPrefab: {fileID: 5425837401448529159, guid: 931920dbdc2296c4e8d2fb3ef42b11c9, type: 3}
   middleBossPrefab: {fileID: 880803416461852192, guid: b56301f69c2d36d498a93f4a898b424b, type: 3}
-  lastBossPrefab: {fileID: 3053695665606929431, guid: 07eb87fbc3478224893f6a4f4085b603, type: 3}
+  lastBossPrefab: {fileID: 5049865784913219871, guid: 07eb87fbc3478224893f6a4f4085b603, type: 3}
   groundY: 0
   poolSize: 60
   spawnInterval: 3
