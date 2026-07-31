@@ -13,6 +13,11 @@ public class TitleManager : MonoBehaviour
         SceneManager.LoadScene("ConnectController");
     }
 
+    public void SkipTutorial()
+    {
+        SceneManager.LoadScene("GameScene");
+    }
+
     public void QuitGame()
     {
         Application.Quit();
