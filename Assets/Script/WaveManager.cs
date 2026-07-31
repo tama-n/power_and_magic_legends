@@ -40,8 +40,8 @@ public class WaveManager : MonoBehaviour
     private int currentWave = 1;
 
     [Header("敵の強化")]
-    [SerializeField] private float speedIncreasePerWave = 0.1f;
-    [SerializeField] private float spawnIntervalDecreasePerWave = 0.15f;
+    [SerializeField] private float speedIncreasePerWave = 0.05f;
+    [SerializeField] private float spawnIntervalDecreasePerWave = 0.1f;
 
     [Header("--- ゲームオーバー画面 ---")]
     [Tooltip("左目用/右目用カメラなど、各Canvasに置いたゲームオーバーパネルを登録")]
@@ -453,45 +453,45 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-    
+
     public void OnSelectUpgradeButton(string upgradeType)
-{
-    if (!isUpgrading) return;
-
-    // チュートリアル中は強化だけ適用して画面は閉じない
-    if (isTutorialUpgrade)
     {
-        Debug.Log($"チュートリアル：{upgradeType} を選択");
+        if (!isUpgrading) return;
 
-        switch (upgradeType)
+        // チュートリアル中は強化だけ適用して画面は閉じない
+        if (isTutorialUpgrade)
         {
-            case "AttackUp":
-                player.BoostAttack(attackUpgradeAmount);
-                break;
+            Debug.Log($"チュートリアル：{upgradeType} を選択");
 
-            case "CriticalUp":
-                player.BoostCriticalChance(criticalUpgradeAmount);
-                break;
+            switch (upgradeType)
+            {
+                case "AttackUp":
+                    player.BoostAttack(attackUpgradeAmount);
+                    break;
 
-            case "CloseRangeUp":
-                player.BoostCloseRange(closeRangeUpgradeAmount);
-                break;
+                case "CriticalUp":
+                    player.BoostCriticalChance(criticalUpgradeAmount);
+                    break;
 
-            case "RangeDistUp":
-                player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount);
-                break;
+                case "CloseRangeUp":
+                    player.BoostCloseRange(closeRangeUpgradeAmount);
+                    break;
 
-            case "MagicCooldownReduce":
-                player.ReduceMagicCooldown(magicCooldownReduceAmount);
-                break;
+                case "RangeDistUp":
+                    player.BoostRangeAttackDistance(rangeAttackDistUpgradeAmount);
+                    break;
+
+                case "MagicCooldownReduce":
+                    player.ReduceMagicCooldown(magicCooldownReduceAmount);
+                    break;
+            }
+
+            return;
         }
 
-        return;
+        // 通常ゲーム
+        EndUpgradePhase(upgradeType);
     }
-
-    // 通常ゲーム
-    EndUpgradePhase(upgradeType);
-}
 
     //強化フェーズの終了とゲーム再開
     private void EndUpgradePhase(string choiceResult)
@@ -623,47 +623,47 @@ public class WaveManager : MonoBehaviour
     }
 
     // チュートリアル用の強化画面を開いているか
-private bool isTutorialUpgrade = false;
+    private bool isTutorialUpgrade = false;
 
-/// <summary>
-/// チュートリアル用：強化選択画面を開く
-/// UpgradePageが表示されている間は閉じない
-/// </summary>
-public void OpenTutorialUpgrade()
-{   
+    /// <summary>
+    /// チュートリアル用：強化選択画面を開く
+    /// UpgradePageが表示されている間は閉じない
+    /// </summary>
+    public void OpenTutorialUpgrade()
+    {
 
-    Debug.Log("OpenTutorialUpgrade が呼ばれました");
-    isTutorialUpgrade = true;
-    isUpgrading = true;
+        Debug.Log("OpenTutorialUpgrade が呼ばれました");
+        isTutorialUpgrade = true;
+        isUpgrading = true;
 
-    // 強化パネルを表示
-    SetUpgradePanelsActive(true);
+        // 強化パネルを表示
+        SetUpgradePanelsActive(true);
 
-    // 強化候補をランダムに3つ表示
-    SelectRandomButtons();
+        // 強化候補をランダムに3つ表示
+        SelectRandomButtons();
 
-    // 最初の候補を選択状態にする
-    SelectFirstActiveButton();
+        // 最初の候補を選択状態にする
+        SelectFirstActiveButton();
 
-    // ゲーム内の動きだけ止める
-    Time.timeScale = 0f;
+        // ゲーム内の動きだけ止める
+        Time.timeScale = 0f;
 
-    Debug.Log("チュートリアル用の強化画面を開きました");
-}
+        Debug.Log("チュートリアル用の強化画面を開きました");
+    }
 
-/// <summary>
-/// チュートリアル用：強化選択画面を閉じる
-/// </summary>
-public void CloseTutorialUpgrade()
-{
-    isTutorialUpgrade = false;
-    isUpgrading = false;
+    /// <summary>
+    /// チュートリアル用：強化選択画面を閉じる
+    /// </summary>
+    public void CloseTutorialUpgrade()
+    {
+        isTutorialUpgrade = false;
+        isUpgrading = false;
 
-    ResetAllButtonScales();
-    SetUpgradePanelsActive(false);
+        ResetAllButtonScales();
+        SetUpgradePanelsActive(false);
 
-    Time.timeScale = 1f;
+        Time.timeScale = 1f;
 
-    Debug.Log("チュートリアル用の強化画面を閉じました");
-}
+        Debug.Log("チュートリアル用の強化画面を閉じました");
+    }
 }

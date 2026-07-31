@@ -140,7 +140,7 @@ MonoBehaviour:
   hp: 0
   hpSlider: {fileID: 8225367176076372597}
   getScoreAmount: 100
-  decScoreAmount: 300
+  decScoreAmount: 50
   isDefeatedByPlayer: 0
 --- !u!54 &1889429379390657962
 Rigidbody:

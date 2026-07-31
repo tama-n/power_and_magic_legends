@@ -18,8 +18,7 @@ public class UpgradeTutorial : MonoBehaviour
 
     private readonly string[] lines =
     {
-        "敵を倒すとスコアが増えるよ！\n"
-        + "一定時間ごとに、\n"
+        "一定時間ごとに、\n"
         + "自分を強化できるんだ！",
 
         "Joy-ConのAボタンで右、\n"
@@ -30,8 +29,9 @@ public class UpgradeTutorial : MonoBehaviour
         + "Joy-Conを振って\n"
         + "決定だ！",
 
-        "どの強化を選ぶかで\n"
-        + "戦い方が変わるよ！\n"
+        "どの強化を選ぶかで\n",
+
+        "戦い方が変わるよ！\n"
         + "いろいろ試してみよう！"
     };
 
@@ -41,6 +41,7 @@ public class UpgradeTutorial : MonoBehaviour
     {
         faces = new Sprite[]
         {
+            normal,
             normal,
             normal,
             normal,

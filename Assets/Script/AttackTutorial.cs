@@ -21,7 +21,7 @@ public class AttackTutorial : MonoBehaviour
     {
         "Joy-conを振って\n迫りくる敵を\n攻撃だ！！",
         "敵との距離\nによって近接\nと魔法を使い分けよう！！",
-        "ZRボタンで近接モード\nRボタンで魔法モード\nに切り替えられるよ！！",
+        "ZRボタンで近接\nRボタンで魔法\nに切り替えられるよ！！",
         "敵を倒すと得点をもらえるよ！！"
     };
 
@@ -40,21 +40,21 @@ public class AttackTutorial : MonoBehaviour
         StartCoroutine(PlayDialogue());
     }
 
-   private IEnumerator PlayDialogue()
-{
-    for (int i = 0; i < lines.Length; i++)
+    private IEnumerator PlayDialogue()
     {
-        dialogueText.text = lines[i];
-        chuojiImage.sprite = faces[i];
+        for (int i = 0; i < lines.Length; i++)
+        {
+            dialogueText.text = lines[i];
+            chuojiImage.sprite = faces[i];
 
-        textAnimation.Play();
+            textAnimation.Play();
 
-        yield return new WaitUntil(() => textAnimation.IsFinished);
+            yield return new WaitUntil(() => textAnimation.IsFinished);
 
-        yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1f);
+        }
+
+        pageManager.ShowMovePage();
     }
-
-    pageManager.ShowMovePage();
-}
 
 }

@@ -27,7 +27,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 380164968695979935}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -44.12325}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -36,7 +36,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -99.830826, y: 7.683}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &5471991288652006099
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b274e178a76e34c44b49449a2f21772a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
-  speed: 10
+  speed: 1.3
   despawnZ: 45
 --- !u!114 &7213433262698503150
 MonoBehaviour:
@@ -267,11 +267,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca5be1e5995b09408bd5a298006e5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 3000
+  maxHp: 1500
   hp: 1200
   hpSlider: {fileID: 4740728660121475329}
   getScoreAmount: 1500
-  decScoreAmount: 800
+  decScoreAmount: 200
   isDefeatedByPlayer: 0
 --- !u!54 &-3434551086203284027
 Rigidbody:
@@ -324,6 +324,30 @@ PrefabInstance:
     - target: {fileID: 3624289694873706260, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
       propertyPath: m_Name
       value: HPbar
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.0070301997
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.0070301997
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.0070301997
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.261
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.049
+      objectReference: {fileID: 0}
+    - target: {fileID: 5272684599544712999, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.807
       objectReference: {fileID: 0}
     - target: {fileID: 5680474074079925226, guid: 26936cdac82cbbd47b32b33c297f9131, type: 3}
       propertyPath: m_Pivot.x
